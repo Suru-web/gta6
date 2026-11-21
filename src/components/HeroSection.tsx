@@ -26,7 +26,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ stats, onScrollToDonat
   ];
 
   const handleNextReason = () => {
-    sounds.playCoin();
+    sounds.playDiceRoll();
     setReasonIdx((prev) => (prev + 1) % reasons.length);
   };
 

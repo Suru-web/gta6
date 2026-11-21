@@ -49,7 +49,7 @@ export const BeggarMemeBox: React.FC<BeggarMemeBoxProps> = ({ onScrollToDonate }
   ];
 
   const handleNextReason = () => {
-    sounds.playCoin();
+    sounds.playDiceRoll();
     setCurrentReasonIdx((prev) => (prev + 1) % SITE_CONFIG.beggingReasons.length);
   };
 

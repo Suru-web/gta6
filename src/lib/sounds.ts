@@ -19,6 +19,7 @@ class SoundController {
   ];
 
   private audioCache: HTMLAudioElement[] = [];
+  private diceAudio: HTMLAudioElement | null = null;
   private lastCycleIndex: number = -1;
 
   constructor() {
@@ -29,6 +30,65 @@ class SoundController {
         audio.preload = 'auto';
         this.audioCache.push(audio);
       });
+      this.diceAudio = new Audio('/sounds/dice-roll.mp3');
+      this.diceAudio.preload = 'auto';
+    }
+  }
+
+  /**
+   * Play the tactile sound of dice rolling (for "Next Excuse 🎲")
+   */
+  public playDiceRoll() {
+    if (!this.enabled || typeof window === 'undefined') return;
+
+    try {
+      if (!this.diceAudio) {
+        this.diceAudio = new Audio('/sounds/dice-roll.mp3');
+      }
+      this.diceAudio.currentTime = 0;
+      this.diceAudio.volume = 0.85;
+      const promise = this.diceAudio.play();
+      if (promise !== undefined) {
+        promise.catch(() => {
+          // Fallback to Web Audio synthesis if audio element fails
+          this.synthesizeDiceRoll();
+        });
+      }
+    } catch {
+      this.synthesizeDiceRoll();
+    }
+  }
+
+  /**
+   * Web Audio API synthesized tumbling dice rattle
+   */
+  private synthesizeDiceRoll() {
+    const ctx = this.getContext();
+    if (!ctx) return;
+
+    try {
+      const now = ctx.currentTime;
+      const impacts = [0.0, 0.06, 0.13, 0.21, 0.30, 0.40, 0.48];
+      impacts.forEach((time, idx) => {
+        const hitTime = now + time;
+        const gainLevel = (1 - idx / impacts.length) * 0.15 + 0.03;
+
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(320 + Math.random() * 150, hitTime);
+        osc.frequency.exponentialRampToValueAtTime(160, hitTime + 0.04);
+
+        gain.gain.setValueAtTime(gainLevel, hitTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, hitTime + 0.045);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(hitTime);
+        osc.stop(hitTime + 0.05);
+      });
+    } catch {
+      // Ignore
     }
   }
 
