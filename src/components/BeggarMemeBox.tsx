@@ -41,7 +41,7 @@ export const BeggarMemeBox: React.FC<BeggarMemeBoxProps> = ({ onScrollToDonate }
     {
       title: "GIGACHAD LAW 👑",
       caption: "Real Chads Support Gamers in Need",
-      dialogue: "A true homie never leaves another homie behind on launch day. Donate ₹10 and walk away like a king.",
+      dialogue: "A true homie never leaves another homie behind when GTA 6 is out. Donate ₹10 and walk away like a king.",
       badge: "Honor Code",
       icon: "👑",
       imgColor: "from-purple-500/20 to-pink-500/20"

@@ -16,7 +16,7 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "HELP A BROTHER OUT TO PLAY GTA 6 | The Vice City Fund",
   description:
-    "Rockstar took 12 years. My bank balance is ₹0. Donate ₹1 to ₹100 via UPI to help a brother play GTA 6 on day one. Live Hall of Fame & memes included!",
+    "Rockstar took 12 years and the game is already out! My bank balance is ₹0. Donate ₹1 to ₹100 via UPI to help a brother play GTA 6 before spoilers ruin everything. Live Hall of Fame & memes included!",
   keywords: ["GTA 6", "GTA VI", "Crowdfunding", "Vice City", "PS5", "Gamer Fund", "UPI Donation"],
   openGraph: {
     title: "HELP A BROTHER OUT TO PLAY GTA 6 🌴🎮",

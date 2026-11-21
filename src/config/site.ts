@@ -64,9 +64,9 @@ export const SITE_CONFIG = {
   beggingReasons: [
     "My current laptop sounds like a Boeing 747 preparing for takeoff if I open Chrome with 3 tabs.",
     "I have re-watched the GTA VI Trailer 1 so many times my YouTube algorithm thinks I live in Miami.",
-    "Rockstar took 12+ years. If I don't play on launch day, my ghost will haunt Los Santos forever.",
+    "Rockstar took 12+ years and GTA VI is already out! If I don't play soon, my ghost will haunt Los Santos forever.",
     "Do you want me to watch some 14-year-old YouTuber with a screaming thumbnail play the whole campaign? Have mercy.",
-    "A ₹1 donation prevents a gamer from crying in a corner when the release countdown hits zero.",
+    "A ₹1 donation prevents a gamer from crying in a corner while everyone else is exploring Vice City.",
     "Lester Crest didn't plan the Union Depository heist just for me to miss GTA VI.",
     "Even Tommy Vercetti started with zero cash and a Hawaiian shirt. Be my Ken Rosenberg.",
     "1 UPI transaction = 1 brick laid in my Vice City gaming mansion.",

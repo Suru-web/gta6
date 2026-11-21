@@ -15,9 +15,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ stats, onScrollToDonat
   const [reasonIdx, setReasonIdx] = useState(0);
 
   const reasons = [
-    "Even a ₹1 donation prevents a gamer from crying in a corner on launch day.",
+    "Even a ₹1 donation prevents a gamer from crying in a corner while everyone else is already playing.",
     "My current laptop sounds like a Boeing 747 preparing for takeoff if I open 3 Chrome tabs.",
-    "Rockstar took 12 years. If I don't play on day one, my ghost will haunt Los Santos forever.",
+    "Rockstar took 12 years and the game is already out! If I don't play soon, my ghost will haunt Los Santos forever.",
     "You spend ₹40 on cold drinks that last 5 minutes. That same ₹40 funds 150 hours of Vice City.",
     "Do you really want me to watch some 14-year-old YouTuber scream through the ending in 480p?",
     "Skip one cutting tapri chai today. Fund one grand heist with Lucia & Jason tomorrow.",
