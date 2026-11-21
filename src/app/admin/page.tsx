@@ -33,6 +33,9 @@ import { UpiConfig, Donation, SiteStats } from '@/types/donation';
 interface StorageStatus {
   isRedisConfigured: boolean;
   isRedisConnected: boolean;
+  redisError?: string;
+  detectedKeys?: string[];
+  latencyMs?: number;
   storageMode: 'cloud_redis' | 'ephemeral_serverless';
   donationsCount: number;
   totalVisits: number;
@@ -388,7 +391,9 @@ export default function AdminPage() {
                 </div>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   {storageStatus?.isRedisConnected
-                    ? 'All devices (mobile, desktop, admin) and serverless instances are synchronized in real-time via Upstash Redis.'
+                    ? `Synchronized live via Upstash Redis (${storageStatus.detectedKeys?.join(', ') || 'Connected'}) • Latency: ${storageStatus.latencyMs ?? 0}ms`
+                    : storageStatus?.isRedisConfigured
+                    ? `Credentials detected (${storageStatus.detectedKeys?.join(', ')}), but connection failed: ${storageStatus.redisError || 'Check Upstash status'}`
                     : 'Without Upstash Redis connected in Vercel, data is stored in temporary lambda memory. Backers paying on desktop won’t reflect on mobile until Redis is connected.'}
                 </p>
               </div>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Outfit } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const bebasNeue = Bebas_Neue({
@@ -34,6 +35,7 @@ export default function RootLayout({
     <html lang="en" className={`${bebasNeue.variable} ${outfit.variable} dark`}>
       <body className="vice-bg min-h-screen text-slate-100 antialiased selection:bg-pink-500 selection:text-white">
         {children}
+        <Analytics />
       </body>
     </html>
   );

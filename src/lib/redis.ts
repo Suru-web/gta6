@@ -1,57 +1,116 @@
 import { Redis } from '@upstash/redis';
 
-// Support all standard Upstash and Vercel KV environment variables
-const redisUrl =
-  process.env.UPSTASH_REDIS_REST_URL ||
-  process.env.KV_REST_API_URL ||
-  process.env.REDIS_REST_API_URL ||
-  process.env.UPSTASH_URL ||
-  process.env.KV_URL;
-
-const redisToken =
-  process.env.UPSTASH_REDIS_REST_TOKEN ||
-  process.env.KV_REST_API_TOKEN ||
-  process.env.REDIS_REST_API_TOKEN ||
-  process.env.UPSTASH_TOKEN ||
-  process.env.KV_TOKEN;
-
 let redisClient: Redis | null = null;
-let initAttempted = false;
+
+/**
+ * Dynamically resolves Upstash Redis URL and Token from process.env at runtime.
+ * Handles any environment variable naming convention created by Vercel / Upstash.
+ */
+export function resolveRedisCredentials(): { url?: string; token?: string; detectedKeys: string[] } {
+  const detectedKeys: string[] = [];
+  const env = process.env;
+
+  // 1. Direct standard names
+  let url =
+    env.UPSTASH_REDIS_REST_URL ||
+    env.KV_REST_API_URL ||
+    env.REDIS_REST_API_URL ||
+    env.UPSTASH_URL ||
+    env.KV_URL;
+
+  let token =
+    env.UPSTASH_REDIS_REST_TOKEN ||
+    env.KV_REST_API_TOKEN ||
+    env.REDIS_REST_API_TOKEN ||
+    env.UPSTASH_TOKEN ||
+    env.KV_TOKEN;
+
+  if (env.UPSTASH_REDIS_REST_URL) detectedKeys.push('UPSTASH_REDIS_REST_URL');
+  if (env.KV_REST_API_URL) detectedKeys.push('KV_REST_API_URL');
+  if (env.UPSTASH_REDIS_REST_TOKEN) detectedKeys.push('UPSTASH_REDIS_REST_TOKEN');
+  if (env.KV_REST_API_TOKEN) detectedKeys.push('KV_REST_API_TOKEN');
+
+  // 2. If not found, scan all process.env keys for any Upstash / KV variables
+  if (!url || !token) {
+    for (const [key, val] of Object.entries(env)) {
+      if (!val || typeof val !== 'string') continue;
+      const upperKey = key.toUpperCase();
+
+      // Look for Upstash REST URL
+      if (!url) {
+        if (
+          (upperKey.includes('UPSTASH') || upperKey.includes('REDIS') || upperKey.includes('KV')) &&
+          (upperKey.includes('URL') || upperKey.includes('REST')) &&
+          val.startsWith('https://')
+        ) {
+          url = val;
+          detectedKeys.push(key);
+        } else if (val.includes('.upstash.io') && val.startsWith('https://')) {
+          url = val;
+          detectedKeys.push(key);
+        }
+      }
+
+      // Look for Token
+      if (!token) {
+        if (
+          (upperKey.includes('UPSTASH') || upperKey.includes('REDIS') || upperKey.includes('KV')) &&
+          upperKey.includes('TOKEN') &&
+          val.length > 20 &&
+          !val.startsWith('http')
+        ) {
+          token = val;
+          detectedKeys.push(key);
+        }
+      }
+    }
+  }
+
+  return { url: url?.trim(), token: token?.trim(), detectedKeys };
+}
 
 export function getRedisClient(): Redis | null {
   if (redisClient) return redisClient;
-  if (initAttempted) return null;
 
-  initAttempted = true;
+  const { url, token, detectedKeys } = resolveRedisCredentials();
 
-  if (redisUrl && redisToken) {
+  if (url && token) {
     try {
       redisClient = new Redis({
-        url: redisUrl.trim(),
-        token: redisToken.trim(),
+        url,
+        token,
       });
-      console.log('✅ Upstash Redis initialized successfully with URL:', redisUrl.split('@')[0].slice(0, 20) + '...');
+      console.log('✅ Connected to Upstash Redis using keys:', detectedKeys.join(', '));
+      return redisClient;
     } catch (err) {
-      console.warn('⚠️ Upstash Redis failed to initialize:', err);
+      console.warn('⚠️ Failed to initialize Upstash Redis client:', err);
       redisClient = null;
     }
   }
 
-  return redisClient;
+  return null;
 }
 
 export function isRedisConfigured(): boolean {
-  return Boolean(redisUrl && redisToken);
+  const { url, token } = resolveRedisCredentials();
+  return Boolean(url && token);
 }
 
-export async function testRedisConnection(): Promise<boolean> {
+export async function testRedisConnection(): Promise<{ connected: boolean; error?: string; latencyMs?: number }> {
   const client = getRedisClient();
-  if (!client) return false;
+  if (!client) {
+    return { connected: false, error: 'No Redis credentials found in process.env' };
+  }
+
+  const start = Date.now();
   try {
     const pingRes = await client.ping();
-    return pingRes === 'PONG' || !!pingRes;
-  } catch (err) {
-    console.warn('Redis ping check failed:', err);
-    return false;
+    const latencyMs = Date.now() - start;
+    const ok = pingRes === 'PONG' || !!pingRes;
+    return { connected: ok, latencyMs };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.warn('Redis test ping failed:', msg);
+    return { connected: false, error: msg };
   }
 }
