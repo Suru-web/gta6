@@ -10,7 +10,6 @@ import { DonorsCarousel } from '@/components/DonorsCarousel';
 import { CheatCodeBox } from '@/components/CheatCodeBox';
 import { PaymentModal } from '@/components/PaymentModal';
 import { ThankYouModal } from '@/components/ThankYouModal';
-import { UpiConfigModal } from '@/components/UpiConfigModal';
 import { Footer } from '@/components/Footer';
 import { Donation, SiteStats, UpiConfig } from '@/types/donation';
 import { SITE_CONFIG } from '@/config/site';
@@ -46,18 +45,21 @@ export default function HomePage() {
   const [selectedPayAmount, setSelectedPayAmount] = useState<number>(69);
   const [isThankYouOpen, setIsThankYouOpen] = useState(false);
   const [latestDonation, setLatestDonation] = useState<Donation | null>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Load custom UPI settings from localStorage on client
+  // Fetch active UPI config from server (configured by admin)
   useEffect(() => {
-    try {
-      const savedConfig = localStorage.getItem('gta6_upi_config');
-      if (savedConfig) {
-        setUpiConfig(JSON.parse(savedConfig));
+    async function loadConfig() {
+      try {
+        const res = await fetch('/api/config');
+        const data = await res.json();
+        if (data.success && data.config) {
+          setUpiConfig(data.config);
+        }
+      } catch {
+        // fallback to default
       }
-    } catch {
-      // ignore
     }
+    loadConfig();
   }, []);
 
   // Fetch real-time donations from API
@@ -146,15 +148,6 @@ export default function HomePage() {
     });
   };
 
-  const handleSaveUpiConfig = (newConfig: UpiConfig) => {
-    setUpiConfig(newConfig);
-    try {
-      localStorage.setItem('gta6_upi_config', JSON.stringify(newConfig));
-    } catch {
-      // ignore
-    }
-  };
-
   const scrollTo = (elementId: string) => {
     const el = document.getElementById(elementId);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -165,7 +158,6 @@ export default function HomePage() {
       {/* Top Navbar */}
       <Navbar
         stats={stats}
-        onOpenSettings={() => setIsSettingsOpen(true)}
         onScrollToLegends={() => scrollTo('hall-of-fame')}
       />
 
@@ -187,7 +179,6 @@ export default function HomePage() {
             setSelectedPayAmount(amt);
             setIsPaymentModalOpen(true);
           }}
-          onOpenSettings={() => setIsSettingsOpen(true)}
         />
 
         {/* 4 Funny Meme Cards: The Hard Truth */}
@@ -203,7 +194,6 @@ export default function HomePage() {
       {/* Footer */}
       <Footer
         onScrollToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       {/* Modals */}
@@ -222,13 +212,6 @@ export default function HomePage() {
           setIsThankYouOpen(false);
           scrollTo('hall-of-fame');
         }}
-      />
-
-      <UpiConfigModal
-        isOpen={isSettingsOpen}
-        currentConfig={upiConfig}
-        onClose={() => setIsSettingsOpen(false)}
-        onSave={handleSaveUpiConfig}
       />
     </div>
   );

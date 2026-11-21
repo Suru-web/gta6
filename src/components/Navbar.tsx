@@ -7,11 +7,10 @@ import { SiteStats } from '@/types/donation';
 
 interface NavbarProps {
   stats: SiteStats;
-  onOpenSettings: () => void;
   onScrollToLegends: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ stats, onOpenSettings, onScrollToLegends }) => {
+export const Navbar: React.FC<NavbarProps> = ({ stats, onScrollToLegends }) => {
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   const toggleSound = () => {
@@ -74,19 +73,6 @@ export const Navbar: React.FC<NavbarProps> = ({ stats, onOpenSettings, onScrollT
             className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#e86b97]/40 bg-[#1c1233] text-slate-200 hover:border-[#fca47a] hover:text-[#fca47a] transition-colors"
           >
             {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} className="text-slate-500" />}
-          </button>
-
-          {/* UPI Settings */}
-          <button
-            onClick={() => {
-              sounds.playClick();
-              onOpenSettings();
-            }}
-            aria-label="UPI Settings"
-            title="Change UPI ID or QR"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#fca47a]/40 bg-[#1c1233] text-[#fca47a] hover:border-[#fca47a] hover:text-white transition-colors"
-          >
-            <Settings size={16} />
           </button>
         </div>
       </div>

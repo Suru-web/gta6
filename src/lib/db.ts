@@ -127,6 +127,34 @@ export async function addDonation(donation: Omit<Donation, 'id' | 'timestamp'>):
 }
 
 /**
+ * Delete a donation by ID (Admin only)
+ */
+export async function deleteDonation(id: string): Promise<boolean> {
+  const current = await getDonations();
+  const updated = current.filter((d) => d.id !== id);
+  memoryDonations = updated;
+
+  if (redisClient) {
+    try {
+      await redisClient.set(REDIS_KEY, updated);
+      return true;
+    } catch (err) {
+      console.warn('Redis delete error:', err);
+    }
+  }
+
+  const filePath = getFilePath();
+  try {
+    fs.writeFileSync(filePath, JSON.stringify(updated, null, 2), 'utf-8');
+    return true;
+  } catch (err) {
+    console.warn('File delete error:', err);
+  }
+
+  return true;
+}
+
+/**
  * Compute aggregate statistics
  */
 export function computeStats(donations: Donation[]): SiteStats {

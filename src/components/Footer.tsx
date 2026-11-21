@@ -6,10 +6,9 @@ import { sounds } from '@/lib/sounds';
 
 interface FooterProps {
   onScrollToTop: () => void;
-  onOpenSettings: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onScrollToTop, onOpenSettings }) => {
+export const Footer: React.FC<FooterProps> = ({ onScrollToTop }) => {
   return (
     <footer className="relative mt-16 border-t border-[#e86b97]/30 bg-[#0d071a] py-10 text-slate-400">
       <div className="mx-auto max-w-5xl px-4">
@@ -31,13 +30,6 @@ export const Footer: React.FC<FooterProps> = ({ onScrollToTop, onOpenSettings })
 
           {/* Quick Actions */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={onOpenSettings}
-              className="rounded-xl border border-[#e86b97]/30 bg-[#1c1233] px-3.5 py-2 text-xs font-semibold text-slate-300 hover:border-[#fca47a] hover:text-[#fca47a] transition-colors"
-            >
-              Configure UPI / QR
-            </button>
-
             <button
               onClick={() => {
                 sounds.playClick();
@@ -61,7 +53,13 @@ export const Footer: React.FC<FooterProps> = ({ onScrollToTop, onOpenSettings })
 
         <div className="mt-5 flex flex-col sm:flex-row items-center justify-between border-t border-white/5 pt-5 text-[11px] text-slate-500 gap-2">
           <span>Official Vice City Sunset Theme • Lucia & Jason Approved 🌴</span>
-          <span>Deployable on Vercel with 1-click persistence</span>
+          <div className="flex items-center gap-3">
+            <span>Deployable on Vercel</span>
+            <span>•</span>
+            <a href="/admin" className="text-slate-500 hover:text-[#fca47a] transition-colors">
+              Admin Portal
+            </a>
+          </div>
         </div>
       </div>
     </footer>

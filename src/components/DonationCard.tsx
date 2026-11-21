@@ -10,13 +10,11 @@ import { sounds } from '@/lib/sounds';
 interface DonationCardProps {
   upiConfig: UpiConfig;
   onOpenPaymentModal: (selectedAmount: number) => void;
-  onOpenSettings: () => void;
 }
 
 export const DonationCard: React.FC<DonationCardProps> = ({
   upiConfig,
   onOpenPaymentModal,
-  onOpenSettings,
 }) => {
   const [selectedAmount, setSelectedAmount] = useState<number>(69);
   const [customAmount, setCustomAmount] = useState<string>('');
@@ -215,10 +213,6 @@ export const DonationCard: React.FC<DonationCardProps> = ({
                 </div>
                 <div className="mt-1 text-[11px] text-slate-400">
                   Payee: <strong className="text-slate-200">{upiConfig.payeeName}</strong>
-                  {' • '}
-                  <button onClick={onOpenSettings} className="text-[#fca47a] hover:underline">
-                    Edit UPI / Upload QR
-                  </button>
                 </div>
               </div>
 

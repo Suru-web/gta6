@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDonations, addDonation, computeStats } from '@/lib/db';
+import { getDonations, addDonation, computeStats, deleteDonation } from '@/lib/db';
 
 export async function GET() {
   try {
@@ -55,5 +55,25 @@ export async function POST(request: NextRequest) {
       { success: false, error: 'Failed to record donation' },
       { status: 500 }
     );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ success: false, error: 'Missing donation id' }, { status: 400 });
+    }
+
+    await deleteDonation(id);
+    const donations = await getDonations();
+    const stats = computeStats(donations);
+
+    return NextResponse.json({ success: true, donations, stats });
+  } catch (error) {
+    console.error('API DELETE /api/donations error:', error);
+    return NextResponse.json({ success: false, error: 'Failed to delete donation' }, { status: 500 });
   }
 }
