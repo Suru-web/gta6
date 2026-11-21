@@ -60,16 +60,23 @@ export default function AdminPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Check existing session from localStorage or cookie
+  // Check session validity with server
   useEffect(() => {
-    try {
-      const isAuth = localStorage.getItem('gta6_admin_auth') === 'true';
-      if (isAuth) {
-        setIsAuthenticated(true);
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/admin/me');
+        const data = await res.json();
+        if (data.authenticated) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+          localStorage.removeItem('gta6_admin_auth');
+        }
+      } catch {
+        setIsAuthenticated(false);
       }
-    } catch {
-      // ignore
     }
+    checkAuth();
   }, []);
 
   const loadAdminData = useCallback(async () => {
@@ -135,8 +142,13 @@ export default function AdminPage() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     sounds.playClick();
+    try {
+      await fetch('/api/admin/logout', { method: 'POST' });
+    } catch {
+      // ignore
+    }
     setIsAuthenticated(false);
     localStorage.removeItem('gta6_admin_auth');
   };

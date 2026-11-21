@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDonations, addDonation, computeStats, deleteDonation } from '@/lib/db';
+import { verifyAdmin } from '@/lib/auth';
 
 export async function GET() {
   try {
@@ -60,6 +61,10 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    if (!verifyAdmin(request)) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
@@ -72,7 +77,10 @@ export async function DELETE(request: NextRequest) {
     const stats = computeStats(donations);
 
     return NextResponse.json({ success: true, donations, stats });
-  } catch (error) {
+  } catch (error: unknown) {
+    if ((error as { digest?: string })?.digest?.startsWith('NEXT_')) {
+      throw error;
+    }
     console.error('API DELETE /api/donations error:', error);
     return NextResponse.json({ success: false, error: 'Failed to delete donation' }, { status: 500 });
   }

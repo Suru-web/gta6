@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUpiConfig, saveUpiConfig } from '@/lib/config-db';
-
-const AUTH_SECRET = 'gta6_admin_secret_token_99999';
+import { verifyAdmin } from '@/lib/auth';
 
 export async function GET() {
   const config = await getUpiConfig();
@@ -10,10 +9,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    const cookieToken = request.cookies.get('admin_token')?.value;
-
-    if (authHeader !== `Bearer ${AUTH_SECRET}` && cookieToken !== AUTH_SECRET) {
+    if (!verifyAdmin(request)) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
