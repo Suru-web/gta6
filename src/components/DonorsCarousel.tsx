@@ -70,8 +70,8 @@ export const DonorsCarousel: React.FC<DonorsCarouselProps> = ({ donations }) => 
               }}
               className={`rounded-xl px-3 py-1.5 text-xs font-black uppercase transition-all ${
                 activeTab === 'all'
-                  ? 'bg-pink-500 text-white brutal-shadow-white'
-                  : 'bg-purple-950/40 text-slate-400 hover:text-white'
+                  ? 'bg-[#e86b97] text-white brutal-shadow-white'
+                  : 'bg-[#1c1233] text-slate-400 hover:text-white'
               }`}
             >
               All
@@ -83,8 +83,8 @@ export const DonorsCarousel: React.FC<DonorsCarouselProps> = ({ donations }) => 
               }}
               className={`inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-black uppercase transition-all ${
                 activeTab === 'top'
-                  ? 'bg-yellow-400 text-black brutal-shadow-white'
-                  : 'bg-purple-950/40 text-slate-400 hover:text-white'
+                  ? 'bg-[#fca47a] text-black brutal-shadow-white'
+                  : 'bg-[#1c1233] text-slate-400 hover:text-white'
               }`}
             >
               <Flame size={12} />
@@ -97,8 +97,8 @@ export const DonorsCarousel: React.FC<DonorsCarouselProps> = ({ donations }) => 
               }}
               className={`inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-black uppercase transition-all ${
                 activeTab === 'recent'
-                  ? 'bg-cyan-400 text-black brutal-shadow-white'
-                  : 'bg-purple-950/40 text-slate-400 hover:text-white'
+                  ? 'bg-[#ffb703] text-black brutal-shadow-white'
+                  : 'bg-[#1c1233] text-slate-400 hover:text-white'
               }`}
             >
               <Clock size={12} />
@@ -112,14 +112,14 @@ export const DonorsCarousel: React.FC<DonorsCarouselProps> = ({ donations }) => 
           {displayed.map((item) => (
             <div
               key={item.id}
-              className="flex flex-col justify-between rounded-2xl border-2 border-white/10 bg-[#140b2b] p-4 transition-transform hover:-translate-y-0.5"
+              className="flex flex-col justify-between rounded-2xl border-2 border-white/10 bg-[#1c1233] p-4 transition-transform hover:-translate-y-0.5 hover:border-[#e86b97]/50"
             >
               <div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-300">
                     {item.badge}
                   </span>
-                  <span className="font-bebas text-2xl font-black text-emerald-400">
+                  <span className="font-bebas text-2xl font-black text-[#fca47a]">
                     ₹{item.amount}
                   </span>
                 </div>
@@ -134,7 +134,7 @@ export const DonorsCarousel: React.FC<DonorsCarouselProps> = ({ donations }) => 
               </div>
 
               <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-2 text-[10px] text-slate-500 font-semibold">
-                <span>Vice City Backer</span>
+                <span>Leonida Backer</span>
                 <span>{formatTime(item.timestamp)}</span>
               </div>
             </div>

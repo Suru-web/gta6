@@ -1,50 +1,48 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-neon-pink: #ff007f;
-  --color-neon-cyan: #00f0ff;
-  --color-sunset-orange: #ff5e36;
-  --color-sunset-gold: #ffb703;
-  --color-vice-dark: #0b071a;
-  --color-vice-card: #150d2e;
+  --color-gta-bg: #110b20;
+  --color-gta-card: #1c1233;
+  --color-gta-surface: #251842;
+  --color-gta-rose: #e86b97;
+  --color-gta-peach: #fca47a;
+  --color-gta-gold: #ffb703;
+  --color-gta-purple: #3d2366;
+  --color-gta-dusk: #2a324b;
   
   --font-bebas: var(--font-bebas);
   --font-outfit: var(--font-outfit);
 }
 
 :root {
-  --background: #0b071a;
-  --foreground: #f8fafc;
+  --background: #110b20;
+  --foreground: #fdf8f4;
 }
 
 body {
-  background-color: #0b071a;
-  color: #f8fafc;
+  background-color: #110b20;
+  color: #fdf8f4;
   font-family: var(--font-outfit), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
 }
 
-/* Crisp Retro Arcade Grid */
+/* Authentic Vice City Dusk Grid */
 .retro-grid {
-  background-color: #0b071a;
+  background-color: #110b20;
   background-image: 
-    linear-gradient(rgba(255, 0, 127, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 240, 255, 0.08) 1px, transparent 1px);
-  background-size: 32px 32px;
+    linear-gradient(rgba(232, 107, 151, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(252, 164, 122, 0.07) 1px, transparent 1px);
+  background-size: 36px 36px;
 }
 
-/* Punchy Neo-Arcade Shadows */
-.brutal-shadow-pink {
-  box-shadow: 4px 4px 0px #ff007f;
+/* Punchy GTA 6 Sunset Shadows */
+.brutal-shadow-rose {
+  box-shadow: 4px 4px 0px #e86b97;
 }
 
-.brutal-shadow-cyan {
-  box-shadow: 4px 4px 0px #00f0ff;
-}
-
-.brutal-shadow-yellow {
-  box-shadow: 4px 4px 0px #ffb703;
+.brutal-shadow-peach {
+  box-shadow: 4px 4px 0px #fca47a;
 }
 
 .brutal-shadow-white {
@@ -61,27 +59,11 @@ body {
   font-family: var(--font-outfit), sans-serif;
 }
 
-/* GTA VI Title Gradient */
+/* Official GTA VI Sky Sunset Gradient */
 .gta-gradient {
-  background: linear-gradient(135deg, #ff007f 0%, #ff5e36 40%, #ffb703 75%, #00f0ff 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #fca47a 40%, #e86b97 75%, #b83a6b 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-
-/* Speech Bubble Tail */
-.speech-bubble {
-  position: relative;
-}
-.speech-bubble::after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: 28px;
-  border-width: 10px 10px 0;
-  border-style: solid;
-  border-color: #ffb703 transparent transparent;
-  display: block;
-  width: 0;
 }
 
 /* Ticker Marquee */
@@ -107,10 +89,10 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0b071a;
+  background: #110b20;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #ff007f;
+  background: #e86b97;
   border-radius: 4px;
 }

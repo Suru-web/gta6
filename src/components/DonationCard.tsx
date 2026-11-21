@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { SITE_CONFIG } from '@/config/site';
 import { UpiConfig } from '@/types/donation';
-import { Copy, Check, QrCode, Smartphone, Sparkles, Heart } from 'lucide-react';
+import { Copy, Check, Smartphone, Heart } from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 
 interface DonationCardProps {
@@ -63,10 +63,10 @@ export const DonationCard: React.FC<DonationCardProps> = ({
   return (
     <section id="donate-section" className="relative px-4 py-3 sm:py-4">
       <div className="mx-auto max-w-3xl">
-        <div className="rounded-3xl border-2 border-cyan-400 bg-[#120a28] p-4 sm:p-7 brutal-shadow-cyan">
+        <div className="rounded-3xl border-2 border-[#fca47a] bg-[#1a1030]/95 p-4 sm:p-7 brutal-shadow-peach backdrop-blur-md">
           {/* Card Header */}
           <div className="text-center">
-            <span className="rounded-md bg-pink-500 px-3 py-0.5 font-sans text-xs font-black uppercase text-white tracking-wider">
+            <span className="rounded-md bg-[#e86b97] px-3 py-0.5 font-sans text-xs font-black uppercase text-white tracking-wider">
               DONATE ₹1 TO ₹100 VIA UPI
             </span>
             <h2 className="mt-1 font-bebas text-3xl sm:text-4xl uppercase tracking-wider text-white">
@@ -85,8 +85,8 @@ export const DonationCard: React.FC<DonationCardProps> = ({
                   onClick={() => handleSelectAmount(item.amount, soundIdx)}
                   className={`flex flex-col items-center justify-center rounded-2xl border-2 p-3 transition-all ${
                     isSelected
-                      ? 'border-yellow-400 bg-yellow-400 text-black brutal-shadow-pink scale-105'
-                      : 'border-white/10 bg-purple-950/40 text-slate-200 hover:border-pink-500 hover:bg-purple-900/40'
+                      ? 'border-[#fca47a] bg-[#fca47a] text-black brutal-shadow-rose scale-105'
+                      : 'border-white/10 bg-[#251842]/60 text-slate-200 hover:border-[#e86b97] hover:bg-[#251842]'
                   }`}
                 >
                   <span className="text-2xl">{item.icon}</span>
@@ -95,7 +95,7 @@ export const DonationCard: React.FC<DonationCardProps> = ({
                   </span>
                   <span
                     className={`text-[9px] uppercase font-bold tracking-wider truncate max-w-full ${
-                      isSelected ? 'text-black' : 'text-pink-400'
+                      isSelected ? 'text-black' : 'text-[#fca47a]'
                     }`}
                   >
                     {item.tag}
@@ -110,7 +110,7 @@ export const DonationCard: React.FC<DonationCardProps> = ({
             <div className="flex items-center gap-2">
               <span className="font-semibold text-slate-300">Custom amount:</span>
               <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-pink-400">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-[#e86b97]">
                   ₹
                 </span>
                 <input
@@ -120,24 +120,24 @@ export const DonationCard: React.FC<DonationCardProps> = ({
                   value={customAmount}
                   onChange={handleCustomChange}
                   placeholder="e.g. 42"
-                  className="w-20 rounded-lg border border-pink-500/50 bg-black/60 pl-6 pr-2 py-1 text-xs font-bold text-white focus:border-yellow-400 focus:outline-none"
+                  className="w-20 rounded-lg border border-[#e86b97]/50 bg-black/60 pl-6 pr-2 py-1 text-xs font-bold text-white focus:border-[#fca47a] focus:outline-none"
                 />
               </div>
               <span className="text-slate-500">(1-100)</span>
             </div>
 
             {currentOption && (
-              <span className="font-bold text-yellow-300 italic text-center sm:text-right">
+              <span className="font-bold text-[#fca47a] italic text-center sm:text-right">
                 {currentOption.meme}
               </span>
             )}
           </div>
 
           {/* THE CLEAN QR CODE & PAYMENT SECTION */}
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-6 rounded-2xl border-2 border-white/10 bg-[#0a0517] p-5 sm:p-6">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-6 rounded-2xl border-2 border-white/10 bg-[#110b20] p-5 sm:p-6">
             {/* The QR Container */}
             <div className="flex flex-col items-center shrink-0">
-              <div className="rounded-2xl border-2 border-pink-500 bg-white p-3 brutal-shadow-pink">
+              <div className="rounded-2xl border-2 border-[#e86b97] bg-white p-3 brutal-shadow-rose">
                 {upiConfig.customQrUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -155,7 +155,7 @@ export const DonationCard: React.FC<DonationCardProps> = ({
                 )}
               </div>
               <div className="mt-2 text-center">
-                <span className="inline-block rounded-full bg-cyan-950 px-2.5 py-0.5 text-[11px] font-bold text-cyan-300 border border-cyan-400/40">
+                <span className="inline-block rounded-full bg-[#251842] px-2.5 py-0.5 text-[11px] font-bold text-[#fca47a] border border-[#fca47a]/40">
                   Scan to Pay ₹{activeAmount}
                 </span>
               </div>
@@ -169,12 +169,12 @@ export const DonationCard: React.FC<DonationCardProps> = ({
                   UPI ID (Click to Copy)
                 </span>
                 <div className="mt-1 flex items-center justify-center sm:justify-start gap-2">
-                  <code className="rounded-xl border border-white/20 bg-purple-950/60 px-3 py-1.5 font-mono text-sm sm:text-base font-bold text-yellow-300">
+                  <code className="rounded-xl border border-white/20 bg-[#251842] px-3 py-1.5 font-mono text-sm sm:text-base font-bold text-[#fca47a]">
                     {upiConfig.upiId}
                   </code>
                   <button
                     onClick={handleCopyUpi}
-                    className="inline-flex items-center gap-1 rounded-xl border-2 border-pink-500 bg-pink-500/20 px-3 py-1.5 text-xs font-black text-pink-300 hover:bg-pink-500 hover:text-white transition-all"
+                    className="inline-flex items-center gap-1 rounded-xl border-2 border-[#e86b97] bg-[#e86b97]/20 px-3 py-1.5 text-xs font-black text-[#e86b97] hover:bg-[#e86b97] hover:text-white transition-all"
                   >
                     {copied ? (
                       <>
@@ -192,7 +192,7 @@ export const DonationCard: React.FC<DonationCardProps> = ({
                 <div className="mt-1 text-[11px] text-slate-400">
                   Payee: <strong className="text-slate-200">{upiConfig.payeeName}</strong>
                   {' • '}
-                  <button onClick={onOpenSettings} className="text-cyan-400 hover:underline">
+                  <button onClick={onOpenSettings} className="text-[#fca47a] hover:underline">
                     Edit UPI / Upload QR
                   </button>
                 </div>
@@ -203,7 +203,7 @@ export const DonationCard: React.FC<DonationCardProps> = ({
                 <a
                   href={upiUrl}
                   onClick={() => sounds.playCoin()}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-cyan-400 bg-cyan-400 px-5 py-2.5 font-sans text-xs sm:text-sm font-black uppercase text-black brutal-shadow-white transition-all active:scale-95"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#fca47a] bg-[#fca47a] px-5 py-2.5 font-sans text-xs sm:text-sm font-black uppercase text-black brutal-shadow-white transition-all active:scale-95 hover:bg-[#ffb78e]"
                 >
                   <Smartphone size={16} />
                   <span>Open UPI App (Pay ₹{activeAmount})</span>
@@ -217,7 +217,7 @@ export const DonationCard: React.FC<DonationCardProps> = ({
                     sounds.playMissionPassed();
                     onOpenPaymentModal(activeAmount);
                   }}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-pink-500 bg-gradient-to-r from-pink-600 to-rose-500 px-5 py-3 font-sans text-xs sm:text-sm font-black uppercase tracking-wider text-white brutal-shadow-yellow transition-all hover:scale-[1.02] active:scale-95"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-[#e86b97] bg-gradient-to-r from-[#e86b97] via-[#d95886] to-[#c52233] px-5 py-3 font-sans text-xs sm:text-sm font-black uppercase tracking-wider text-white brutal-shadow-peach transition-all hover:scale-[1.02] active:scale-95"
                 >
                   <Heart size={16} className="fill-white" />
                   <span>I Paid! Put Me on the Wall of Legends 🚀</span>
