@@ -4,8 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { TickerMarquee } from '@/components/TickerMarquee';
 import { HeroSection } from '@/components/HeroSection';
-import { BeggarMemeBox } from '@/components/BeggarMemeBox';
 import { DonationCard } from '@/components/DonationCard';
+import { MemeReasonsGrid } from '@/components/MemeReasonsGrid';
 import { DonorsCarousel } from '@/components/DonorsCarousel';
 import { CheatCodeBox } from '@/components/CheatCodeBox';
 import { PaymentModal } from '@/components/PaymentModal';
@@ -66,7 +66,6 @@ export default function HomePage() {
       const res = await fetch('/api/donations');
       const data = await res.json();
       if (data.success && Array.isArray(data.donations)) {
-        // Merge with any client-local donations that might not have reached serverless storage
         let merged = [...data.donations];
         try {
           const localOnly = JSON.parse(localStorage.getItem('my_gta6_donations') || '[]');
@@ -84,7 +83,6 @@ export default function HomePage() {
 
         setDonations(merged);
         if (data.stats) {
-          // Recompute stats with merged
           const totalRaised = merged.reduce((s, d) => s + (Number(d.amount) || 0), 0);
           setStats({
             targetAmount: SITE_CONFIG.targetAmount,
@@ -117,13 +115,11 @@ export default function HomePage() {
     fetchDonations();
   }, [fetchDonations]);
 
-  // Handler for successful donation submission
   const handleDonationSuccess = (newDonation: Donation) => {
     setLatestDonation(newDonation);
     setIsPaymentModalOpen(false);
     setIsThankYouOpen(true);
 
-    // Optimistically update list & stats
     const updated = [newDonation, ...donations.filter((d) => d.id !== newDonation.id)];
     setDonations(updated);
 
@@ -150,7 +146,6 @@ export default function HomePage() {
     });
   };
 
-  // Handler for saving UPI settings
   const handleSaveUpiConfig = (newConfig: UpiConfig) => {
     setUpiConfig(newConfig);
     try {
@@ -160,39 +155,32 @@ export default function HomePage() {
     }
   };
 
-  // Scroll helpers
   const scrollTo = (elementId: string) => {
     const el = document.getElementById(elementId);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col justify-between">
+    <div className="retro-grid min-h-screen flex flex-col justify-between selection:bg-yellow-400 selection:text-black">
       {/* Top Navbar */}
       <Navbar
         stats={stats}
         onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenHallOfFame={() => scrollTo('hall-of-fame')}
+        onScrollToLegends={() => scrollTo('hall-of-fame')}
       />
 
-      {/* Infinite Top Marquee of Donors */}
+      {/* Infinite Top Ticker */}
       <TickerMarquee donations={donations} />
 
       {/* Main Content */}
-      <main className="flex-1">
-        {/* Hero Section */}
+      <main className="flex-1 space-y-4">
+        {/* Hero Section with Crying Beggar Mascot & Retro Progress Bar */}
         <HeroSection
           stats={stats}
           onScrollToDonate={() => scrollTo('donate-section')}
-          onScrollToMemes={() => scrollTo('beggar-vault')}
         />
 
-        {/* The Beggar Meme Box (Please memes & reasons) */}
-        <BeggarMemeBox onScrollToDonate={() => scrollTo('donate-section')} />
-
-        {/* The Donation & UPI QR Card */}
+        {/* The Direct UPI Donation Card with QR Code */}
         <DonationCard
           upiConfig={upiConfig}
           onOpenPaymentModal={(amt) => {
@@ -202,10 +190,13 @@ export default function HomePage() {
           onOpenSettings={() => setIsSettingsOpen(true)}
         />
 
-        {/* Hall of Fame Carousel: Who Paid How Much */}
+        {/* 4 Funny Meme Cards: The Hard Truth */}
+        <MemeReasonsGrid />
+
+        {/* Wall of Legends: Who Paid How Much */}
         <DonorsCarousel donations={donations} />
 
-        {/* Cheat Code Terminal Easter Egg */}
+        {/* Cheat Code Terminal */}
         <CheatCodeBox />
       </main>
 
@@ -215,8 +206,7 @@ export default function HomePage() {
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
-      {/* MODALS */}
-      {/* Payment Confirmation Modal */}
+      {/* Modals */}
       <PaymentModal
         isOpen={isPaymentModalOpen}
         initialAmount={selectedPayAmount}
@@ -224,7 +214,6 @@ export default function HomePage() {
         onSuccess={handleDonationSuccess}
       />
 
-      {/* Thank You / You Are Great Meme Modal */}
       <ThankYouModal
         isOpen={isThankYouOpen}
         donation={latestDonation}
@@ -235,7 +224,6 @@ export default function HomePage() {
         }}
       />
 
-      {/* UPI / QR Config Modal */}
       <UpiConfigModal
         isOpen={isSettingsOpen}
         currentConfig={upiConfig}

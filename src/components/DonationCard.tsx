@@ -23,14 +23,14 @@ export const DonationCard: React.FC<DonationCardProps> = ({
   const [isCustom, setIsCustom] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
 
-  const activeAmount = isCustom ? Math.max(1, Math.min(100, Number(customAmount) || 1)) : selectedAmount;
+  const activeAmount = isCustom
+    ? Math.max(1, Math.min(100, Number(customAmount) || 1))
+    : selectedAmount;
 
-  // Build standard UPI intent string
+  // Build UPI intent link
   const upiUrl = `upi://pay?pa=${encodeURIComponent(upiConfig.upiId)}&pn=${encodeURIComponent(
     upiConfig.payeeName
-  )}&am=${activeAmount}&cu=INR&tn=${encodeURIComponent(
-    `GTA6 Fund - ₹${activeAmount}`
-  )}`;
+  )}&am=${activeAmount}&cu=INR&tn=${encodeURIComponent(`GTA6 Fund - ₹${activeAmount}`)}`;
 
   const handleCopyUpi = () => {
     sounds.playClick();
@@ -56,41 +56,42 @@ export const DonationCard: React.FC<DonationCardProps> = ({
   const currentOption = SITE_CONFIG.suggestedAmounts.find((a) => a.amount === activeAmount);
 
   return (
-    <section id="donate-section" className="relative py-12 sm:py-16">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6">
-        <div className="rounded-3xl border border-pink-500/40 bg-gradient-to-b from-[#180a33] to-[#0d051c] p-6 sm:p-10 backdrop-blur-2xl shadow-[0_0_50px_rgba(255,0,127,0.15)]">
+    <section id="donate-section" className="relative px-4 py-3 sm:py-4">
+      <div className="mx-auto max-w-3xl">
+        <div className="rounded-3xl border-2 border-cyan-400 bg-[#120a28] p-4 sm:p-7 brutal-shadow-cyan">
           {/* Card Header */}
           <div className="text-center">
-            <span className="font-bebas text-xs tracking-widest text-cyan-400 font-bold uppercase">
-              Step 1: Choose Your Amount & Scan UPI
+            <span className="rounded-md bg-pink-500 px-3 py-0.5 font-sans text-xs font-black uppercase text-white tracking-wider">
+              DONATE ₹1 TO ₹100 VIA UPI
             </span>
-            <h2 className="mt-1 font-bebas text-4xl sm:text-5xl uppercase tracking-wider text-white">
-              SELECT YOUR DONATION (₹1 TO ₹100)
+            <h2 className="mt-1 font-bebas text-3xl sm:text-4xl uppercase tracking-wider text-white">
+              SELECT YOUR SACRIFICE & SCAN
             </h2>
-            <p className="mt-1 text-sm text-slate-300">
-              Every single rupee directly fuels the PS5 & GTA VI Steelbook fund.
-            </p>
           </div>
 
-          {/* Amount Selector Chips */}
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-6">
+          {/* Amount Selector Buttons */}
+          <div className="mt-6 grid grid-cols-3 sm:grid-cols-6 gap-2.5">
             {SITE_CONFIG.suggestedAmounts.map((item) => {
               const isSelected = !isCustom && selectedAmount === item.amount;
               return (
                 <button
                   key={item.amount}
                   onClick={() => handleSelectAmount(item.amount)}
-                  className={`relative flex flex-col items-center justify-center rounded-2xl border p-3.5 transition-all ${
+                  className={`flex flex-col items-center justify-center rounded-2xl border-2 p-3 transition-all ${
                     isSelected
-                      ? 'border-pink-500 bg-pink-950/60 shadow-[0_0_20px_rgba(255,0,127,0.4)] scale-105'
-                      : 'border-purple-500/20 bg-purple-950/20 hover:border-pink-500/40 hover:bg-purple-900/30 text-slate-300'
+                      ? 'border-yellow-400 bg-yellow-400 text-black brutal-shadow-pink scale-105'
+                      : 'border-white/10 bg-purple-950/40 text-slate-200 hover:border-pink-500 hover:bg-purple-900/40'
                   }`}
                 >
-                  <span className="text-2xl mb-1">{item.icon}</span>
-                  <span className="font-bebas text-2xl font-bold tracking-wider text-white">
+                  <span className="text-2xl">{item.icon}</span>
+                  <span className="font-bebas text-2xl font-black tracking-wide leading-none mt-1">
                     ₹{item.amount}
                   </span>
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-pink-400">
+                  <span
+                    className={`text-[9px] uppercase font-bold tracking-wider truncate max-w-full ${
+                      isSelected ? 'text-black' : 'text-pink-400'
+                    }`}
+                  >
                     {item.tag}
                   </span>
                 </button>
@@ -98,12 +99,14 @@ export const DonationCard: React.FC<DonationCardProps> = ({
             })}
           </div>
 
-          {/* Custom Amount Field (₹1 - ₹100) */}
-          <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-purple-500/20 bg-purple-950/30 p-3">
+          {/* Custom Amount + Funny Meme Roast */}
+          <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-slate-300">Or type custom amount:</span>
+              <span className="font-semibold text-slate-300">Custom amount:</span>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-pink-400">₹</span>
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-pink-400">
+                  ₹
+                </span>
                 <input
                   type="number"
                   min="1"
@@ -111,73 +114,61 @@ export const DonationCard: React.FC<DonationCardProps> = ({
                   value={customAmount}
                   onChange={handleCustomChange}
                   placeholder="e.g. 42"
-                  className="w-28 rounded-lg border border-pink-500/40 bg-black/40 pl-7 pr-3 py-1.5 text-sm font-bold text-white placeholder-slate-500 focus:border-pink-400 focus:outline-none"
+                  className="w-20 rounded-lg border border-pink-500/50 bg-black/60 pl-6 pr-2 py-1 text-xs font-bold text-white focus:border-yellow-400 focus:outline-none"
                 />
               </div>
-              <span className="text-xs text-slate-400">(Max ₹100 as requested)</span>
+              <span className="text-slate-500">(1-100)</span>
             </div>
 
-            {/* Current Tier Perk / Meme */}
             {currentOption && (
-              <div className="flex items-center gap-2 text-xs text-amber-300">
-                <Sparkles size={14} />
-                <span className="font-medium italic">{currentOption.meme}</span>
-              </div>
+              <span className="font-bold text-yellow-300 italic text-center sm:text-right">
+                {currentOption.meme}
+              </span>
             )}
           </div>
 
-          {/* DYNAMIC QR CODE & UPI SECTION */}
-          <div className="mt-8 flex flex-col md:flex-row items-center justify-center gap-8 rounded-2xl border border-pink-500/30 bg-[#0e061f] p-6 sm:p-8">
+          {/* THE CLEAN QR CODE & PAYMENT SECTION */}
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-6 rounded-2xl border-2 border-white/10 bg-[#0a0517] p-5 sm:p-6">
             {/* The QR Container */}
-            <div className="flex flex-col items-center">
-              <div className="relative rounded-2xl border-2 border-pink-500/60 bg-white p-4 shadow-[0_0_30px_rgba(255,0,127,0.3)]">
+            <div className="flex flex-col items-center shrink-0">
+              <div className="rounded-2xl border-2 border-pink-500 bg-white p-3 brutal-shadow-pink">
                 {upiConfig.customQrUrl ? (
-                  // Custom uploaded QR code
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={upiConfig.customQrUrl}
-                    alt="Custom UPI QR Code"
-                    className="h-48 w-48 object-contain"
+                    alt="Custom UPI QR"
+                    className="h-44 w-44 object-contain"
                   />
                 ) : (
-                  // Dynamic UPI QR with amount prefilled
                   <QRCodeSVG
                     value={upiUrl}
-                    size={192}
+                    size={176}
                     level="H"
                     includeMargin={false}
-                    imageSettings={{
-                      src: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff007f'><path d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/></svg>",
-                      x: undefined,
-                      y: undefined,
-                      height: 32,
-                      width: 32,
-                      excavate: true,
-                    }}
                   />
                 )}
               </div>
-
-              {/* Amount badge on QR */}
-              <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-pink-500/40 bg-pink-950/60 px-3 py-1 text-xs font-bold text-pink-300">
-                <QrCode size={13} />
-                <span>Scan with GPay / PhonePe / Paytm: ₹{activeAmount}</span>
+              <div className="mt-2 text-center">
+                <span className="inline-block rounded-full bg-cyan-950 px-2.5 py-0.5 text-[11px] font-bold text-cyan-300 border border-cyan-400/40">
+                  Scan to Pay ₹{activeAmount}
+                </span>
               </div>
             </div>
 
-            {/* Payment Details & Buttons */}
-            <div className="flex-1 space-y-4 text-center md:text-left">
+            {/* Details & Actions */}
+            <div className="flex-1 space-y-3.5 text-center sm:text-left w-full">
+              {/* UPI ID */}
               <div>
-                <span className="text-[11px] uppercase font-bold tracking-wider text-slate-400 block">
+                <span className="text-[11px] font-bold uppercase text-slate-400 block">
                   UPI ID (Click to Copy)
                 </span>
-                <div className="mt-1 flex items-center justify-center md:justify-start gap-2">
-                  <code className="rounded-lg border border-purple-500/30 bg-purple-950/40 px-3 py-1.5 font-mono text-sm sm:text-base font-bold text-cyan-300">
+                <div className="mt-1 flex items-center justify-center sm:justify-start gap-2">
+                  <code className="rounded-xl border border-white/20 bg-purple-950/60 px-3 py-1.5 font-mono text-sm sm:text-base font-bold text-yellow-300">
                     {upiConfig.upiId}
                   </code>
                   <button
                     onClick={handleCopyUpi}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-pink-500/40 bg-pink-950/40 px-3 py-1.5 text-xs font-semibold text-pink-300 hover:bg-pink-900/60 transition-colors"
+                    className="inline-flex items-center gap-1 rounded-xl border-2 border-pink-500 bg-pink-500/20 px-3 py-1.5 text-xs font-black text-pink-300 hover:bg-pink-500 hover:text-white transition-all"
                   >
                     {copied ? (
                       <>
@@ -192,48 +183,39 @@ export const DonationCard: React.FC<DonationCardProps> = ({
                     )}
                   </button>
                 </div>
-                <div className="mt-1 flex items-center justify-center md:justify-start gap-2 text-xs text-slate-400">
-                  <span>Payee: <strong className="text-slate-200">{upiConfig.payeeName}</strong></span>
-                  <span>•</span>
-                  <button
-                    onClick={onOpenSettings}
-                    className="text-pink-400 hover:underline"
-                  >
-                    Change UPI ID / QR
+                <div className="mt-1 text-[11px] text-slate-400">
+                  Payee: <strong className="text-slate-200">{upiConfig.payeeName}</strong>
+                  {' • '}
+                  <button onClick={onOpenSettings} className="text-cyan-400 hover:underline">
+                    Edit UPI / Upload QR
                   </button>
                 </div>
               </div>
 
-              {/* Direct UPI Intent Link for Mobile */}
+              {/* Direct UPI Mobile Link */}
               <div>
                 <a
                   href={upiUrl}
                   onClick={() => sounds.playCoin()}
-                  className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-cyan-400/50 bg-gradient-to-r from-cyan-600 to-blue-600 px-6 py-3 font-sans text-sm font-bold uppercase tracking-wider text-white shadow-[0_0_20px_rgba(0,240,255,0.3)] transition-all hover:scale-102 hover:shadow-[0_0_25px_rgba(0,240,255,0.5)] active:scale-95"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-cyan-400 bg-cyan-400 px-5 py-2.5 font-sans text-xs sm:text-sm font-black uppercase text-black brutal-shadow-white transition-all active:scale-95"
                 >
-                  <Smartphone size={18} />
+                  <Smartphone size={16} />
                   <span>Open UPI App (Pay ₹{activeAmount})</span>
                 </a>
-                <p className="mt-1.5 text-[11px] text-slate-400">
-                  Directly launches Google Pay, PhonePe, Paytm, or BHIM on your device.
-                </p>
               </div>
 
-              {/* THE "I HAVE PAID" TRIGGER BUTTON */}
-              <div className="pt-2 border-t border-purple-500/20">
+              {/* THE "I PAID" BUTTON */}
+              <div className="pt-2 border-t border-white/10">
                 <button
                   onClick={() => {
                     sounds.playMissionPassed();
                     onOpenPaymentModal(activeAmount);
                   }}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 px-6 py-3.5 font-sans text-sm font-black uppercase tracking-wider text-white shadow-[0_0_30px_rgba(255,0,127,0.5)] transition-all hover:scale-102 hover:shadow-[0_0_40px_rgba(255,0,127,0.7)] active:scale-95 animate-pulse"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-pink-500 bg-gradient-to-r from-pink-600 to-rose-500 px-5 py-3 font-sans text-xs sm:text-sm font-black uppercase tracking-wider text-white brutal-shadow-yellow transition-all hover:scale-[1.02] active:scale-95"
                 >
-                  <Heart size={18} className="fill-white" />
-                  <span>I Paid! Claim My Clout on Hall of Fame 🚀</span>
+                  <Heart size={16} className="fill-white" />
+                  <span>I Paid! Put Me on the Wall of Legends 🚀</span>
                 </button>
-                <p className="mt-1 text-center md:text-left text-[11px] text-pink-300/80">
-                  Paid? Click above to enter your name (optional) and get your thank-you meme!
-                </p>
               </div>
             </div>
           </div>
