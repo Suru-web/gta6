@@ -91,6 +91,23 @@ export const SITE_CONFIG = {
 
 ---
 
+## 🔒 Admin Portal (`/admin`)
+
+To ensure visitors cannot tamper with your UPI settings or QR code, all configuration is locked behind the secure **Admin Portal**:
+
+- **URL**: `/admin` (e.g. `http://localhost:3000/admin` or `https://your-app.vercel.app/admin`)
+- **Username**: `suraj`
+- **Password**: `Suraj@123`
+
+### What You Can Do in the Admin Console:
+1. **Change UPI ID**: Update your real UPI address (e.g. `suraj@okhdfcbank` or `yourphone@paytm`).
+2. **Update Payee Name**: Change your display name.
+3. **Upload Custom QR Code**: Upload your bank's official QR code image (or leave blank to use the dynamic auto-generated QR code).
+4. **Moderate Donations**: View all donor submissions and delete test or spam entries.
+5. **Instant Live Sync**: Any changes saved in `/admin` immediately reflect for all visitors on the public site!
+
+---
+
 ## 💻 Local Development
 
 ```bash
