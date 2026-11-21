@@ -15,7 +15,10 @@ export async function GET() {
       },
       {
         headers: {
-          'Cache-Control': 'no-store, max-age=0',
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'Surrogate-Control': 'no-store',
         },
       }
     );
@@ -31,15 +34,24 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, amount, message, badge } = body;
+    const { name, amount, message, badge, utrNumber, screenshotUrl } = body;
 
     const parsedAmount = Math.max(1, Math.min(100000, Number(amount) || 1));
+
+    if (utrNumber && !/^\d{12}$/.test(String(utrNumber).trim())) {
+      return NextResponse.json(
+        { success: false, error: 'UPI Transaction Reference (UTR) must be exactly 12 digits.' },
+        { status: 400 }
+      );
+    }
     
     const newDonation = await addDonation({
       name: typeof name === 'string' ? name.slice(0, 50) : '',
       amount: parsedAmount,
       message: typeof message === 'string' ? message.slice(0, 200) : '',
       badge: typeof badge === 'string' ? badge : '👑 Gigachad',
+      utrNumber: typeof utrNumber === 'string' ? utrNumber.trim() : undefined,
+      screenshotUrl: typeof screenshotUrl === 'string' && screenshotUrl.startsWith('data:image') ? screenshotUrl : undefined,
     });
 
     const allDonations = await getDonations();
@@ -50,11 +62,12 @@ export async function POST(request: NextRequest) {
       donation: newDonation,
       stats,
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('API POST /api/donations error:', error);
+    const msg = error instanceof Error ? error.message : 'Failed to record donation';
     return NextResponse.json(
-      { success: false, error: 'Failed to record donation' },
-      { status: 500 }
+      { success: false, error: msg },
+      { status: 400 }
     );
   }
 }

@@ -5,6 +5,9 @@ export interface Donation {
   message: string;
   badge: string;
   timestamp: number;
+  utrNumber?: string;
+  screenshotUrl?: string;
+  isVerified?: boolean;
   isRecent?: boolean;
 }
 

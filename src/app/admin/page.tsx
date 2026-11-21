@@ -22,8 +22,22 @@ import {
   ChevronUp,
   ExternalLink,
   ShieldAlert,
+  X,
+  Copy,
+  Check,
+  Database,
+  ImageIcon,
 } from 'lucide-react';
 import { UpiConfig, Donation, SiteStats } from '@/types/donation';
+
+interface StorageStatus {
+  isRedisConfigured: boolean;
+  isRedisConnected: boolean;
+  storageMode: 'cloud_redis' | 'ephemeral_serverless';
+  donationsCount: number;
+  totalVisits: number;
+  region: string;
+}
 
 interface AdminAnalytics {
   totalVisits: number;
@@ -55,9 +69,20 @@ export default function AdminPage() {
   const [donations, setDonations] = useState<Donation[]>([]);
   const [stats, setStats] = useState<SiteStats | null>(null);
   const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
+  const [storageStatus, setStorageStatus] = useState<StorageStatus | null>(null);
   const [showPrivacyGuide, setShowPrivacyGuide] = useState<boolean>(true);
+  const [showRedisGuide, setShowRedisGuide] = useState<boolean>(false);
+  const [previewScreenshot, setPreviewScreenshot] = useState<string | null>(null);
+  const [previewScreenshotDonor, setPreviewScreenshotDonor] = useState<Donation | null>(null);
+  const [copiedUtr, setCopiedUtr] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const handleCopyUtr = (utr: string) => {
+    navigator.clipboard.writeText(utr);
+    setCopiedUtr(utr);
+    setTimeout(() => setCopiedUtr(null), 2000);
+  };
 
   // Check session validity with server
   useEffect(() => {
@@ -80,15 +105,16 @@ export default function AdminPage() {
 
   const loadAdminData = useCallback(async () => {
     try {
+      const t = Date.now();
       // 1. Fetch current UPI config
-      const configRes = await fetch('/api/admin/config');
+      const configRes = await fetch(`/api/admin/config?_t=${t}`, { cache: 'no-store' });
       const configData = await configRes.json();
       if (configData.success && configData.config) {
         setUpiConfig(configData.config);
       }
 
       // 2. Fetch donations & stats
-      const donRes = await fetch('/api/donations');
+      const donRes = await fetch(`/api/donations?_t=${t}`, { cache: 'no-store' });
       const donData = await donRes.json();
       if (donData.success) {
         setDonations(donData.donations || []);
@@ -96,10 +122,17 @@ export default function AdminPage() {
       }
 
       // 3. Fetch detailed visitor & conversion analytics
-      const analyticsRes = await fetch('/api/admin/analytics');
+      const analyticsRes = await fetch(`/api/admin/analytics?_t=${t}`, { cache: 'no-store' });
       const analyticsData = await analyticsRes.json();
       if (analyticsData.success && analyticsData.analytics) {
         setAnalytics(analyticsData.analytics);
+      }
+
+      // 4. Fetch database & cloud storage diagnostic status
+      const statusRes = await fetch(`/api/admin/status?_t=${t}`, { cache: 'no-store' });
+      const statusData = await statusRes.json();
+      if (statusData.success && statusData.status) {
+        setStorageStatus(statusData.status);
       }
     } catch (err) {
       console.error('Failed to load admin data:', err);
@@ -109,6 +142,8 @@ export default function AdminPage() {
   useEffect(() => {
     if (isAuthenticated) {
       loadAdminData();
+      const interval = setInterval(loadAdminData, 5000);
+      return () => clearInterval(interval);
     }
   }, [isAuthenticated, loadAdminData]);
 
@@ -318,6 +353,100 @@ export default function AdminPage() {
             </button>
           </div>
         </header>
+
+        {/* Cloud Storage & Cross-Device Sync Status Banner */}
+        <div
+          className={`rounded-2xl border-2 p-4 transition-all ${
+            storageStatus?.isRedisConnected
+              ? 'border-emerald-500/30 bg-emerald-950/20'
+              : 'border-amber-500/40 bg-amber-950/30'
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-start sm:items-center gap-3">
+              <div
+                className={`h-3 w-3 rounded-full shrink-0 mt-1 sm:mt-0 ${
+                  storageStatus?.isRedisConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+                }`}
+              />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-xs uppercase tracking-wider text-white">
+                    {storageStatus?.isRedisConnected
+                      ? 'Live Cloud Database Active'
+                      : 'Storage Alert: Temporary Serverless Memory'}
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                      storageStatus?.isRedisConnected
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                        : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    }`}
+                  >
+                    {storageStatus?.isRedisConnected ? 'Upstash Redis Connected' : 'No Redis Connected'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  {storageStatus?.isRedisConnected
+                    ? 'All devices (mobile, desktop, admin) and serverless instances are synchronized in real-time via Upstash Redis.'
+                    : 'Without Upstash Redis connected in Vercel, data is stored in temporary lambda memory. Backers paying on desktop won’t reflect on mobile until Redis is connected.'}
+                </p>
+              </div>
+            </div>
+
+            {!storageStatus?.isRedisConnected && (
+              <button
+                type="button"
+                onClick={() => setShowRedisGuide(!showRedisGuide)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-400/20 shrink-0"
+              >
+                <Database size={13} />
+                <span>{showRedisGuide ? 'Hide Setup Guide' : 'How to Connect Redis (100% Free)'}</span>
+                {showRedisGuide ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+            )}
+          </div>
+
+          {showRedisGuide && !storageStatus?.isRedisConnected && (
+            <div className="mt-3 pt-3 border-t border-amber-500/20 text-xs text-slate-300 space-y-2">
+              <p className="font-bold text-white">
+                Why mobile showed ₹0 while desktop showed ₹10:
+              </p>
+              <p className="text-slate-400 text-[11px]">
+                Vercel runs serverless functions across isolated containers. When Upstash Redis is missing, each container keeps data only in its own temporary local memory.
+              </p>
+              <div className="rounded-xl bg-black/60 p-3.5 border border-white/10 space-y-2">
+                <span className="font-bold text-[#fca47a] block text-xs uppercase tracking-wider">
+                  30-Second 1-Click Setup in Vercel (Free Forever):
+                </span>
+                <ol className="list-decimal list-inside space-y-1.5 text-[11px] text-slate-300">
+                  <li>
+                    Open your{' '}
+                    <a
+                      href="https://vercel.com/dashboard"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[#fca47a] underline font-semibold hover:text-white"
+                    >
+                      Vercel Dashboard
+                    </a>{' '}
+                    and click on your <strong className="text-white">gta6</strong> project.
+                  </li>
+                  <li>
+                    Click the <strong className="text-white">Storage</strong> tab in the project navigation.
+                  </li>
+                  <li>
+                    Click <strong className="text-white">Connect Database</strong> &rarr; Select{' '}
+                    <strong className="text-white">Upstash (Redis)</strong> &rarr; Click <strong className="text-white">Create</strong>.
+                  </li>
+                  <li>
+                    That’s it! Vercel automatically links <code className="text-[#fca47a]">UPSTASH_REDIS_REST_URL</code> and triggers a redeployment. Cross-device sync will be active instantly.
+                  </li>
+                </ol>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Live Metrics */}
         {stats && (
@@ -650,14 +779,19 @@ export default function AdminPage() {
 
         {/* Manage Donations / Backers */}
         <section className="rounded-3xl border-2 border-white/10 bg-[#1c1233] p-6">
-          <div className="flex items-center justify-between border-b border-white/10 pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-white/10 pb-4 gap-2">
             <div>
               <h2 className="font-bebas text-3xl uppercase tracking-wider text-white">
                 ALL DONATIONS ({donations.length})
               </h2>
               <p className="text-xs text-slate-400">
-                View, monitor, and remove test or invalid entries.
+                Inspect 12-digit UTR references, view payment screenshot receipts, and delete fraudulent entries.
               </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-slate-400 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+                🛡️ Verified Entries Only
+              </span>
             </div>
           </div>
 
@@ -665,40 +799,182 @@ export default function AdminPage() {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="border-b border-white/10 text-slate-400 font-bold uppercase text-[10px]">
-                  <th className="py-2.5 px-3">Donor</th>
+                  <th className="py-2.5 px-3">Donor & Date</th>
                   <th className="py-2.5 px-3">Amount</th>
+                  <th className="py-2.5 px-3">12-Digit UTR</th>
+                  <th className="py-2.5 px-3">Payment Receipt</th>
                   <th className="py-2.5 px-3">Badge</th>
                   <th className="py-2.5 px-3">Message</th>
                   <th className="py-2.5 px-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {donations.map((d) => (
-                  <tr key={d.id} className="hover:bg-white/5 transition-colors">
-                    <td className="py-2.5 px-3 font-bold text-white">{d.name}</td>
-                    <td className="py-2.5 px-3 font-bebas text-lg font-bold text-emerald-400">
-                      ₹{d.amount}
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-300">{d.badge}</td>
-                    <td className="py-2.5 px-3 text-slate-400 italic max-w-xs truncate">
-                      {d.message}
-                    </td>
-                    <td className="py-2.5 px-3 text-right">
-                      <button
-                        onClick={() => handleDeleteDonation(d.id)}
-                        title="Delete donation"
-                        className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-950/30 px-2.5 py-1 text-[11px] font-bold text-rose-300 hover:bg-rose-900/50"
-                      >
-                        <Trash2 size={12} />
-                        <span>Delete</span>
-                      </button>
+                {donations.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-12 text-center text-slate-400">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <span className="text-3xl">🎮</span>
+                        <p className="font-bold text-sm text-slate-200">No Donations Recorded Yet</p>
+                        <p className="text-xs text-slate-500 max-w-sm">
+                          When backers contribute and submit their 12-digit UPI reference with a screenshot, their records will appear here live.
+                        </p>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  donations.map((d) => (
+                    <tr key={d.id} className="hover:bg-white/5 transition-colors">
+                      <td className="py-2.5 px-3 font-bold text-white">
+                        <div className="font-semibold text-white">{d.name}</div>
+                        <span className="text-[10px] text-slate-500 font-normal">
+                          {new Date(d.timestamp).toLocaleString('en-IN', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 font-bebas text-lg font-bold text-emerald-400">
+                        ₹{d.amount}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        {d.utrNumber ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-[11px] text-[#fca47a] bg-black/60 px-2 py-0.5 rounded border border-white/10 font-bold">
+                              {d.utrNumber}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyUtr(d.utrNumber!)}
+                              title="Copy UTR to clipboard"
+                              className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+                            >
+                              {copiedUtr === d.utrNumber ? (
+                                <Check size={12} className="text-emerald-400" />
+                              ) : (
+                                <Copy size={12} />
+                              )}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-slate-500 italic">No UTR</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        {d.screenshotUrl ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewScreenshot(d.screenshotUrl!);
+                              setPreviewScreenshotDonor(d);
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[#e86b97]/40 bg-[#e86b97]/15 px-2.5 py-1 text-[11px] font-bold text-[#fca47a] hover:bg-[#e86b97]/30 transition-all"
+                          >
+                            <Eye size={12} />
+                            <span>View Receipt</span>
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-500 italic">No receipt</span>
+                        )}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-300">{d.badge}</td>
+                      <td className="py-2.5 px-3 text-slate-400 italic max-w-xs truncate">
+                        {d.message}
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteDonation(d.id)}
+                          title="Delete donation"
+                          className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-950/30 px-2.5 py-1 text-[11px] font-bold text-rose-300 hover:bg-rose-900/50 transition-colors"
+                        >
+                          <Trash2 size={12} />
+                          <span>Delete</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </section>
+
+        {/* Screenshot / Receipt Lightbox Modal */}
+        {previewScreenshot && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
+            <div className="relative w-full max-w-lg rounded-3xl border-2 border-[#e86b97] bg-[#160d29] p-5 brutal-shadow-rose">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <div>
+                  <h3 className="font-bebas text-2xl uppercase tracking-wider text-white">
+                    PAYMENT RECEIPT VERIFICATION
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    {previewScreenshotDonor
+                      ? `${previewScreenshotDonor.name} • ₹${previewScreenshotDonor.amount}`
+                      : 'Donor Screenshot'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPreviewScreenshot(null);
+                    setPreviewScreenshotDonor(null);
+                  }}
+                  className="rounded-xl p-2 text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="mt-4 flex flex-col items-center">
+                <div className="relative max-h-[58vh] w-full overflow-auto rounded-2xl border border-white/20 bg-black/80 flex items-center justify-center p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={previewScreenshot}
+                    alt="Payment Receipt"
+                    className="max-h-[52vh] w-auto object-contain rounded-lg shadow-2xl"
+                  />
+                </div>
+
+                {previewScreenshotDonor?.utrNumber && (
+                  <div className="mt-4 w-full flex items-center justify-between rounded-xl border border-white/10 bg-black/60 p-3 text-xs">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block">
+                        12-Digit UPI Ref / UTR
+                      </span>
+                      <span className="font-mono text-sm font-bold text-[#fca47a] tracking-wider">
+                        {previewScreenshotDonor.utrNumber}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyUtr(previewScreenshotDonor.utrNumber!)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/5 px-2.5 py-1.5 text-[11px] font-bold text-white hover:bg-white/10"
+                    >
+                      {copiedUtr === previewScreenshotDonor.utrNumber ? (
+                        <>
+                          <Check size={13} className="text-emerald-400" />
+                          <span className="text-emerald-400">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={13} />
+                          <span>Copy UTR</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                <div className="mt-3 w-full rounded-xl border border-emerald-500/20 bg-emerald-950/20 p-2.5 text-[11px] text-emerald-300">
+                  💡 Cross-check this 12-digit UTR in your PhonePe / GPay / Jupiter transaction history or SMS to confirm funds arrived.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

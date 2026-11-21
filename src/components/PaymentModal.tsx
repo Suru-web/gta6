@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Send, Sparkles, ShieldCheck } from 'lucide-react';
+import { X, Send, Sparkles, ShieldCheck, Upload, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 import { SITE_CONFIG } from '@/config/site';
 import { Donation } from '@/types/donation';
 import { sounds } from '@/lib/sounds';
@@ -23,15 +23,72 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [amount, setAmount] = useState<number>(initialAmount || 69);
   const [message, setMessage] = useState('');
   const [selectedBadge, setSelectedBadge] = useState('👑 Gigachad');
+  const [utrNumber, setUtrNumber] = useState('');
+  const [screenshotUrl, setScreenshotUrl] = useState<string>('');
+  const [screenshotName, setScreenshotName] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   if (!isOpen) return null;
 
+  const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setErrorMsg('Please select a valid image file (PNG, JPG, or WEBP)');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg('Image size should be under 5MB');
+      return;
+    }
+
+    setScreenshotName(file.name);
+    setErrorMsg('');
+
+    // Read and compress image client-side to keep payload lightweight
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 800;
+        const scale = Math.min(1, MAX_WIDTH / img.width);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.75);
+          setScreenshotUrl(compressed);
+        } else {
+          setScreenshotUrl(event.target?.result as string);
+        }
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setErrorMsg('');
+
+    const cleanUtr = utrNumber.trim();
+    if (!cleanUtr || cleanUtr.length !== 12 || !/^\d{12}$/.test(cleanUtr)) {
+      setErrorMsg('Please enter a valid 12-digit numeric UPI Transaction ID (UTR) from your receipt.');
+      return;
+    }
+
+    if (!screenshotUrl) {
+      setErrorMsg('Please upload a screenshot of your payment confirmation screen.');
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const res = await fetch('/api/donations', {
@@ -42,35 +99,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           amount: Math.max(1, Number(amount) || 1),
           message: message.trim() || 'Respect +1 for the GTA 6 fund! 🎮',
           badge: selectedBadge,
+          utrNumber: cleanUtr,
+          screenshotUrl,
         }),
       });
 
       const data = await res.json();
       if (data.success && data.donation) {
-        // Also save to client localStorage so it's always preserved on their device
-        try {
-          const localSaved = JSON.parse(localStorage.getItem('my_gta6_donations') || '[]');
-          localStorage.setItem('my_gta6_donations', JSON.stringify([data.donation, ...localSaved]));
-        } catch {
-          // ignore localStorage error
-        }
-
         onSuccess(data.donation);
       } else {
-        setErrorMsg(data.error || 'Failed to record donation. Please try again.');
+        setErrorMsg(data.error || 'Failed to record donation. Please check your transaction details.');
       }
     } catch (err) {
       console.error('Submission error:', err);
-      // Fallback: create client-side donation object if offline
-      const fallbackDonation: Donation = {
-        id: `offline-${Date.now()}`,
-        name: name.trim() || 'Anonymous Legend',
-        amount: Math.max(1, Number(amount) || 1),
-        message: message.trim() || 'Respect +1 for the GTA 6 fund! 🎮',
-        badge: selectedBadge,
-        timestamp: Date.now(),
-      };
-      onSuccess(fallbackDonation);
+      setErrorMsg('Network error. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -191,10 +233,68 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             />
           </div>
 
+          {/* 12-Digit UTR / Transaction ID (Anti-Spam Validation) */}
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                UPI Reference / UTR Number <span className="text-[#fca47a] font-bold">*</span>
+              </label>
+              <span className="text-[10px] text-slate-500">12 Digits Required</span>
+            </div>
+            <input
+              type="text"
+              maxLength={12}
+              required
+              value={utrNumber}
+              onChange={(e) => setUtrNumber(e.target.value.replace(/[^0-9]/g, ''))}
+              placeholder="e.g. 432109876543 (from receipt)"
+              className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-mono tracking-wider text-[#fca47a] placeholder-slate-600 focus:border-[#fca47a] focus:ring-1 focus:ring-[#fca47a] focus:outline-none transition-colors"
+            />
+            <span className="text-[10px] text-slate-500 mt-1 block">
+              Found on your Google Pay / PhonePe / Paytm payment screen.
+            </span>
+          </div>
+
+          {/* Screenshot Upload (Proof of Payment) */}
+          <div>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                Payment Screenshot / Receipt <span className="text-[#fca47a] font-bold">*</span>
+              </label>
+              {screenshotUrl && <span className="text-[10px] text-emerald-400 font-semibold">✓ Attached</span>}
+            </div>
+
+            <div className="mt-1.5 flex items-center gap-3">
+              <label className="flex-1 cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/[0.03] px-4 py-3 text-xs font-semibold text-slate-300 hover:border-[#e86b97] hover:bg-white/[0.06] transition-all">
+                <Upload size={15} className="text-[#e86b97]" />
+                <span className="truncate max-w-[200px]">
+                  {screenshotName ? screenshotName : 'Upload UPI Screenshot'}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  required
+                  onChange={handleScreenshotChange}
+                  className="hidden"
+                />
+              </label>
+
+              {screenshotUrl && (
+                <div className="relative h-12 w-12 rounded-lg border border-white/20 overflow-hidden shrink-0 bg-black">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={screenshotUrl} alt="Receipt preview" className="h-full w-full object-cover" />
+                </div>
+              )}
+            </div>
+            <span className="text-[10px] text-slate-500 mt-1 block">
+              Screenshots verify authentic payments and block fake/troll entries.
+            </span>
+          </div>
+
           {/* Trust Banner */}
           <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] p-2.5 text-[11px] text-slate-400">
             <ShieldCheck size={16} className="text-[#fca47a] shrink-0" />
-            <span>Honesty policy: Instantly adds your name to the community board. Rockstar salutes you!</span>
+            <span>Verified entries join the live Wall of Legends and broadcast feed.</span>
           </div>
 
           {/* Submit */}

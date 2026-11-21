@@ -2,24 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { UpiConfig } from '@/types/donation';
 import { SITE_CONFIG } from '@/config/site';
-import { Redis } from '@upstash/redis';
+import { getRedisClient } from './redis';
 
 const REDIS_CONFIG_KEY = 'gta6_upi_config';
-
-let redisClient: Redis | null = null;
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-
-if (redisUrl && redisToken) {
-  try {
-    redisClient = new Redis({
-      url: redisUrl,
-      token: redisToken,
-    });
-  } catch (err) {
-    console.warn('Redis config client error:', err);
-  }
-}
 
 const defaultConfig: UpiConfig = {
   upiId: SITE_CONFIG.defaultUpiId,
@@ -39,9 +24,10 @@ function getConfigFilePath(): string {
 
 export async function getUpiConfig(): Promise<UpiConfig> {
   // 1. Try Redis
-  if (redisClient) {
+  const redis = getRedisClient();
+  if (redis) {
     try {
-      const data = await redisClient.get<UpiConfig>(REDIS_CONFIG_KEY);
+      const data = await redis.get<UpiConfig>(REDIS_CONFIG_KEY);
       if (data && data.upiId) {
         return data;
       }
@@ -72,9 +58,10 @@ export async function saveUpiConfig(newConfig: UpiConfig): Promise<UpiConfig> {
   memoryConfig = { ...newConfig };
 
   // 1. Persist to Redis
-  if (redisClient) {
+  const redis = getRedisClient();
+  if (redis) {
     try {
-      await redisClient.set(REDIS_CONFIG_KEY, newConfig);
+      await redis.set(REDIS_CONFIG_KEY, newConfig);
     } catch (err) {
       console.warn('Redis config write error:', err);
     }

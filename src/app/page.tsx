@@ -94,10 +94,16 @@ export default function HomePage() {
     loadConfig();
   }, []);
 
-  // Fetch real-time donations from API
+  // Fetch real-time donations from API with cache-busting
   const fetchDonations = useCallback(async () => {
     try {
-      const res = await fetch('/api/donations');
+      const res = await fetch(`/api/donations?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+        },
+      });
       const data = await res.json();
       if (data.success && Array.isArray(data.donations)) {
         setDonations(data.donations);
@@ -110,8 +116,26 @@ export default function HomePage() {
     }
   }, []);
 
+  // Real-time polling & sync across mobile and desktop
   useEffect(() => {
     fetchDonations();
+
+    const interval = setInterval(fetchDonations, 4000);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchDonations();
+      }
+    };
+
+    window.addEventListener('focus', fetchDonations);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', fetchDonations);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [fetchDonations]);
 
   const handleDonationSuccess = (newDonation: Donation) => {

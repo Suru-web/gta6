@@ -1,25 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import { getDonations } from './db';
-import { Redis } from '@upstash/redis';
+import { getRedisClient } from './redis';
 
 const REDIS_ANALYTICS_KEY = 'gta6_analytics';
-
-// Upstash Redis client
-let redisClient: Redis | null = null;
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-
-if (redisUrl && redisToken) {
-  try {
-    redisClient = new Redis({
-      url: redisUrl,
-      token: redisToken,
-    });
-  } catch (err) {
-    console.warn('Analytics: Redis not available, using file/memory:', err);
-  }
-}
 
 export interface AnalyticsRecord {
   totalVisits: number;
@@ -47,9 +31,10 @@ function getAnalyticsFilePath(): string {
 
 export async function getAnalyticsData(): Promise<AnalyticsRecord> {
   // 1. Try Redis
-  if (redisClient) {
+  const redis = getRedisClient();
+  if (redis) {
     try {
-      const data = await redisClient.get<AnalyticsRecord>(REDIS_ANALYTICS_KEY);
+      const data = await redis.get<AnalyticsRecord>(REDIS_ANALYTICS_KEY);
       if (data && typeof data.totalVisits === 'number') {
         memoryAnalytics = data;
         return data;
@@ -108,9 +93,10 @@ export async function recordVisit(visitorId?: string): Promise<{ totalVisits: nu
   memoryAnalytics = updated;
 
   // Persist to Redis
-  if (redisClient) {
+  const redis = getRedisClient();
+  if (redis) {
     try {
-      await redisClient.set(REDIS_ANALYTICS_KEY, updated);
+      await redis.set(REDIS_ANALYTICS_KEY, updated);
     } catch (err) {
       console.warn('Redis analytics write error:', err);
     }

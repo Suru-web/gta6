@@ -3,25 +3,11 @@ import path from 'path';
 import { Donation, SiteStats } from '@/types/donation';
 import { SITE_CONFIG } from '@/config/site';
 import seedDonations from '@/data/seed-donations.json';
-import { Redis } from '@upstash/redis';
+import { getRedisClient, isRedisConfigured } from './redis';
 
 const REDIS_KEY = 'gta6_donations';
 
-// Initialize Upstash Redis client if credentials exist
-let redisClient: Redis | null = null;
-const redisUrl = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-
-if (redisUrl && redisToken) {
-  try {
-    redisClient = new Redis({
-      url: redisUrl,
-      token: redisToken,
-    });
-  } catch (err) {
-    console.warn('Failed to initialize Redis client, falling back to local/tmp store:', err);
-  }
-}
+export { isRedisConfigured };
 
 // In-memory fallback store
 let memoryDonations: Donation[] = [...(seedDonations as Donation[])];
@@ -40,9 +26,10 @@ function getFilePath(): string {
  */
 export async function getDonations(): Promise<Donation[]> {
   // 1. Try Redis if configured
-  if (redisClient) {
+  const redis = getRedisClient();
+  if (redis) {
     try {
-      const data = await redisClient.get<Donation[]>(REDIS_KEY);
+      const data = await redis.get<Donation[]>(REDIS_KEY);
       if (data && Array.isArray(data)) {
         return data;
       }
@@ -85,6 +72,16 @@ export async function getDonations(): Promise<Donation[]> {
  * Add a new donation to storage
  */
 export async function addDonation(donation: Omit<Donation, 'id' | 'timestamp'>): Promise<Donation> {
+  const current = await getDonations();
+
+  // Validate duplicate UTR if provided
+  if (donation.utrNumber) {
+    const cleanUtr = donation.utrNumber.trim();
+    if (cleanUtr.length === 12 && current.some((d) => d.utrNumber && d.utrNumber.trim() === cleanUtr)) {
+      throw new Error(`This 12-digit UPI UTR (${cleanUtr}) has already been recorded.`);
+    }
+  }
+
   const newDonation: Donation = {
     id: `don-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     name: donation.name?.trim() || 'Anonymous Legend',
@@ -92,16 +89,19 @@ export async function addDonation(donation: Omit<Donation, 'id' | 'timestamp'>):
     message: donation.message?.trim() || 'Respect +1 for the GTA 6 fund! 🎮',
     badge: donation.badge || '👑 Gigachad',
     timestamp: Date.now(),
+    utrNumber: donation.utrNumber?.trim(),
+    screenshotUrl: donation.screenshotUrl,
+    isVerified: donation.isVerified ?? false,
   };
 
-  const current = await getDonations();
   const updated = [newDonation, ...current];
   memoryDonations = updated;
 
   // 1. Persist to Redis if available
-  if (redisClient) {
+  const redis = getRedisClient();
+  if (redis) {
     try {
-      await redisClient.set(REDIS_KEY, updated);
+      await redis.set(REDIS_KEY, updated);
       return newDonation;
     } catch (err) {
       console.warn('Redis write error:', err);
@@ -131,9 +131,10 @@ export async function deleteDonation(id: string): Promise<boolean> {
   const updated = current.filter((d) => d.id !== id);
   memoryDonations = updated;
 
-  if (redisClient) {
+  const redis = getRedisClient();
+  if (redis) {
     try {
-      await redisClient.set(REDIS_KEY, updated);
+      await redis.set(REDIS_KEY, updated);
       return true;
     } catch (err) {
       console.warn('Redis delete error:', err);
