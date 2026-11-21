@@ -21,8 +21,12 @@ export const DonationCard: React.FC<DonationCardProps> = ({
   const [isCustom, setIsCustom] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
 
+  const customNum = Number(customAmount);
+  const isCustomBelowMin = isCustom && customAmount !== '' && customNum < 100;
+
+  // Enforce minimum ₹100 for custom amounts (amounts <= 100 are handled by preset chips)
   const activeAmount = isCustom
-    ? Math.max(1, Math.min(100000, Number(customAmount) || 1))
+    ? Math.max(100, Math.min(100000, customNum || 100))
     : selectedAmount;
 
   // Build standard UPI intent URI
@@ -51,8 +55,14 @@ export const DonationCard: React.FC<DonationCardProps> = ({
     setIsCustom(true);
     const val = e.target.value.replace(/[^0-9]/g, '');
     setCustomAmount(val);
-    if (val) {
-      sounds.playDonateSound();
+  };
+
+  const handleCustomBlur = () => {
+    if (isCustom && customAmount !== '') {
+      const num = Number(customAmount);
+      if (num < 100) {
+        setCustomAmount('100');
+      }
     }
   };
 
@@ -107,43 +117,67 @@ export const DonationCard: React.FC<DonationCardProps> = ({
           </div>
 
           {/* Custom Helper Amount Field */}
-          <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-black/40 px-4 py-2.5 text-xs">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-medium text-[#fdfbf7]">Custom amount:</span>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#fca47a]">
-                  ₹
+          <div className="mt-4 rounded-xl border border-white/[0.06] bg-black/40 p-3 text-xs">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-medium text-[#fdfbf7]">Custom amount:</span>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#fca47a]">
+                    ₹
+                  </span>
+                  <input
+                    type="number"
+                    min="100"
+                    max="100000"
+                    value={customAmount}
+                    onChange={handleCustomChange}
+                    onBlur={handleCustomBlur}
+                    placeholder="Min ₹100"
+                    className={`w-32 rounded-lg border bg-black/60 pl-6 pr-2 py-1 text-xs font-semibold text-[#fdfbf7] placeholder-[#6c637e] focus:outline-none transition-colors ${
+                      isCustomBelowMin
+                        ? 'border-rose-500/80 focus:border-rose-500'
+                        : 'border-white/20 focus:border-[#fca47a]'
+                    }`}
+                  />
+                </div>
+                <span className="text-[11px] text-[#a19bb5]">
+                  (Min ₹100 for custom donations)
                 </span>
-                <input
-                  type="number"
-                  min="1"
-                  max="100000"
-                  value={customAmount}
-                  onChange={handleCustomChange}
-                  placeholder="e.g. 250, 500, 1000+"
-                  className="w-28 rounded-lg border border-white/20 bg-black/60 pl-6 pr-2 py-1 text-xs font-semibold text-[#fdfbf7] placeholder-[#6c637e] focus:border-[#fca47a] focus:outline-none"
-                />
               </div>
-              <span className="text-[11px] text-[#a19bb5]">
-                (Any amount above ₹100 welcome)
-              </span>
+
+              <div className="text-left sm:text-right font-medium text-xs text-[#fca47a] italic">
+                {isCustom ? (
+                  isCustomBelowMin ? (
+                    <span className="text-rose-400 font-semibold not-italic">
+                      ⚠️ Min custom is ₹100 (pick chips above for ₹1–₹100)
+                    </span>
+                  ) : activeAmount >= 10000 ? (
+                    <span>🚀 Heist of the century: Console secured in one hit!</span>
+                  ) : activeAmount >= 1000 ? (
+                    <span>👑 Vice City Godfather tier contribution!</span>
+                  ) : activeAmount > 100 ? (
+                    <span>🐳 Ultra Whale status unlocked!</span>
+                  ) : (
+                    <span>Custom contribution: ₹100</span>
+                  )
+                ) : (
+                  currentOption && <span>{currentOption.meme}</span>
+                )}
+              </div>
             </div>
 
-            <div className="text-center sm:text-right font-medium text-xs text-[#fca47a] italic">
-              {isCustom ? (
-                activeAmount >= 10000 ? (
-                  <span>🚀 Heist of the century: Console secured in one hit!</span>
-                ) : activeAmount >= 1000 ? (
-                  <span>👑 Vice City Godfather tier contribution!</span>
-                ) : activeAmount > 100 ? (
-                  <span>🐳 Ultra Whale status unlocked!</span>
-                ) : (
-                  <span>Custom contribution: ₹{activeAmount}</span>
-                )
-              ) : (
-                currentOption && <span>{currentOption.meme}</span>
-              )}
-            </div>
+            {isCustomBelowMin && (
+              <div className="mt-2 text-[11px] text-rose-300/90 font-medium border-t border-rose-500/20 pt-2 flex items-center justify-between">
+                <span>Amounts below ₹100 are already available in the quick pickers above.</span>
+                <button
+                  type="button"
+                  onClick={() => setCustomAmount('100')}
+                  className="underline text-[#fca47a] hover:text-white ml-2 text-[10px] font-bold uppercase tracking-wider"
+                >
+                  Set to ₹100
+                </button>
+              </div>
+            )}
           </div>
 
           {/* The QR Code & Payment Details */}
