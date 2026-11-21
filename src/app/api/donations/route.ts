@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDonations, addDonation, computeStats, deleteDonation } from '@/lib/db';
 import { verifyAdmin } from '@/lib/auth';
 import { getBadgeForAmount } from '@/config/site';
+import { sendDonationAlert } from '@/lib/notifications';
 
 export async function GET() {
   try {
@@ -57,6 +58,11 @@ export async function POST(request: NextRequest) {
 
     const allDonations = await getDonations();
     const stats = computeStats(allDonations);
+
+    // Asynchronously dispatch instant webhook alerts (Telegram/Discord)
+    sendDonationAlert({ donation: newDonation, stats }).catch((err) => {
+      console.error('[Notification] Background alert error:', err);
+    });
 
     return NextResponse.json({
       success: true,

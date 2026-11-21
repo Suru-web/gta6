@@ -15,22 +15,53 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "HELP A BROTHER OUT TO PLAY GTA 6 | The Vice City Fund",
+  metadataBase: new URL("https://gta6-two-dun.vercel.app"),
+  title: "Can The Internet Buy Me GTA 6 For ₹1? 🎮💀",
   description:
-    "Rockstar took 12 years and the game is already out! My bank balance is ₹0. Donate ₹1 to ₹100 via UPI to help a brother play GTA 6 before spoilers ruin everything. Live Hall of Fame & memes included!",
-  keywords: ["GTA 6", "GTA VI", "Crowdfunding", "Vice City", "PS5", "Gamer Fund", "UPI Donation"],
+    "Rockstar waited 12 years. My wallet has ₹0.00. Test cheat codes, hear retro sounds, and get immortalized on the live Wall of Legends.",
+  keywords: [
+    "GTA 6",
+    "GTA VI",
+    "Crowdfunding",
+    "Vice City",
+    "PS5 Pro",
+    "Gamer Fund",
+    "UPI Donation",
+    "HESOYAM",
+    "Wall of Legends",
+  ],
   openGraph: {
-    title: "HELP A BROTHER OUT TO PLAY GTA 6 🌴🎮",
-    description: "Donate ₹1 to ₹100 via UPI and become a certified Vice City legend. Target: ₹69,900.",
+    title: "Can The Internet Buy Me GTA 6 For ₹1? 🎮💀",
+    description:
+      "Rockstar waited 12 years. My wallet has ₹0.00. Test cheat codes, hear retro sounds, and get immortalized on the live Wall of Legends.",
+    url: "https://gta6-two-dun.vercel.app",
+    siteName: "GTA VI Vice City Fund",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Can The Internet Buy Me GTA 6 For ₹1? 🎮💀",
+      },
+    ],
     type: "website",
+    locale: "en_IN",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Can The Internet Buy Me GTA 6 For ₹1? 🎮💀",
+    description:
+      "Rockstar waited 12 years. My wallet has ₹0.00. Test cheat codes, hear retro sounds, and get immortalized on the live Wall of Legends.",
+    images: ["/og-image.png"],
+    creator: "@SurajGMeharwade",
   },
   icons: {
     icon: [
-      { url: '/icon.png', sizes: '256x256', type: 'image/png' },
-      { url: '/favicon.ico', sizes: 'any' },
+      { url: "/icon.png", sizes: "256x256", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
     ],
     apple: [
-      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
 };
