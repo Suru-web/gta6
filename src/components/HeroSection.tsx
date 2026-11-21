@@ -3,15 +3,16 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { SiteStats } from '@/types/donation';
-import { Dices, Calendar, Sparkles } from 'lucide-react';
+import { Dices, Calendar, Sparkles, Eye } from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 
 interface HeroSectionProps {
   stats: SiteStats;
+  totalVisits?: number;
   onScrollToDonate: () => void;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ stats, onScrollToDonate }) => {
+export const HeroSection: React.FC<HeroSectionProps> = ({ stats, totalVisits, onScrollToDonate }) => {
   const [reasonIdx, setReasonIdx] = useState(0);
 
   const reasons = [
@@ -118,7 +119,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ stats, onScrollToDonat
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              {typeof totalVisits === 'number' && (
+                <div className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-right flex items-center gap-1.5">
+                  <Eye size={12} className="text-[#fca47a]" />
+                  <span className="text-[11px] font-semibold text-[#a19bb5]">
+                    {totalVisits.toLocaleString('en-IN')} Visits
+                  </span>
+                </div>
+              )}
               <div className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-right flex items-center gap-1.5">
                 <Calendar size={12} className="text-[#fca47a]" />
                 <span className="text-[11px] font-semibold text-[#fca47a]">

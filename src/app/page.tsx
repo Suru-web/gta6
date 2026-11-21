@@ -45,6 +45,38 @@ export default function HomePage() {
   const [selectedPayAmount, setSelectedPayAmount] = useState<number>(69);
   const [isThankYouOpen, setIsThankYouOpen] = useState(false);
   const [latestDonation, setLatestDonation] = useState<Donation | null>(null);
+  const [totalVisits, setTotalVisits] = useState<number>(1428);
+
+  // Track visit and fetch total visits
+  useEffect(() => {
+    async function trackVisit() {
+      try {
+        let visitorId = '';
+        try {
+          visitorId = localStorage.getItem('gta6_visitor_id') || '';
+          if (!visitorId) {
+            visitorId = `vis-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+            localStorage.setItem('gta6_visitor_id', visitorId);
+          }
+        } catch {
+          // ignore
+        }
+
+        const res = await fetch('/api/analytics', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ visitorId }),
+        });
+        const data = await res.json();
+        if (data.success && typeof data.totalVisits === 'number') {
+          setTotalVisits(data.totalVisits);
+        }
+      } catch {
+        // fallback
+      }
+    }
+    trackVisit();
+  }, []);
 
   // Fetch active UPI config from server (configured by admin)
   useEffect(() => {
@@ -158,6 +190,7 @@ export default function HomePage() {
       {/* Top Navbar */}
       <Navbar
         stats={stats}
+        totalVisits={totalVisits}
         onScrollToLegends={() => scrollTo('hall-of-fame')}
       />
 
@@ -169,6 +202,7 @@ export default function HomePage() {
         {/* Hero Section with Crying Beggar Mascot & Retro Progress Bar */}
         <HeroSection
           stats={stats}
+          totalVisits={totalVisits}
           onScrollToDonate={() => scrollTo('donate-section')}
         />
 

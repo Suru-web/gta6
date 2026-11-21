@@ -1,16 +1,17 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Volume2, VolumeX, Shield, Trophy } from 'lucide-react';
+import { Volume2, VolumeX, Shield, Trophy, Eye } from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 import { SiteStats } from '@/types/donation';
 
 interface NavbarProps {
   stats: SiteStats;
+  totalVisits?: number;
   onScrollToLegends: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ stats, onScrollToLegends }) => {
+export const Navbar: React.FC<NavbarProps> = ({ stats, totalVisits, onScrollToLegends }) => {
   const [soundEnabled, setSoundEnabled] = useState(true);
 
   const toggleSound = () => {
@@ -43,6 +44,15 @@ export const Navbar: React.FC<NavbarProps> = ({ stats, onScrollToLegends }) => {
             </span>
             <span className="text-[#6c637e]">/ ₹{stats.targetAmount.toLocaleString('en-IN')}</span>
           </div>
+
+          {/* Public Total Visits Counter */}
+          {typeof totalVisits === 'number' && (
+            <div className="hidden lg:flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-xs text-[#a19bb5]">
+              <Eye size={12} className="text-[#fca47a]" />
+              <span className="font-semibold text-[#fdfbf7]">{totalVisits.toLocaleString('en-IN')}</span>
+              <span>Visits</span>
+            </div>
+          )}
         </div>
 
         {/* Right Actions */}
