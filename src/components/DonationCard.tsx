@@ -41,8 +41,10 @@ export const DonationCard: React.FC<DonationCardProps> = ({
     }
   };
 
-  const handleSelectAmount = (amt: number) => {
-    sounds.playCoin();
+  const soundMap = [4, 2, 3, 1, 0, 0];
+
+  const handleSelectAmount = (amt: number, soundIdx?: number) => {
+    sounds.playDonateSound(soundIdx);
     setIsCustom(false);
     setSelectedAmount(amt);
   };
@@ -51,6 +53,9 @@ export const DonationCard: React.FC<DonationCardProps> = ({
     setIsCustom(true);
     const val = e.target.value.replace(/[^0-9]/g, '');
     setCustomAmount(val);
+    if (val) {
+      sounds.playDonateSound();
+    }
   };
 
   const currentOption = SITE_CONFIG.suggestedAmounts.find((a) => a.amount === activeAmount);
@@ -71,12 +76,13 @@ export const DonationCard: React.FC<DonationCardProps> = ({
 
           {/* Amount Selector Buttons */}
           <div className="mt-6 grid grid-cols-3 sm:grid-cols-6 gap-2.5">
-            {SITE_CONFIG.suggestedAmounts.map((item) => {
+            {SITE_CONFIG.suggestedAmounts.map((item, idx) => {
               const isSelected = !isCustom && selectedAmount === item.amount;
+              const soundIdx = soundMap[idx] ?? (idx % 5);
               return (
                 <button
                   key={item.amount}
-                  onClick={() => handleSelectAmount(item.amount)}
+                  onClick={() => handleSelectAmount(item.amount, soundIdx)}
                   className={`flex flex-col items-center justify-center rounded-2xl border-2 p-3 transition-all ${
                     isSelected
                       ? 'border-yellow-400 bg-yellow-400 text-black brutal-shadow-pink scale-105'

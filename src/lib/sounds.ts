@@ -1,11 +1,82 @@
 /**
- * Synthesizes retro arcade & GTA-style sound effects using the Web Audio API.
- * 100% self-contained, zero external audio assets required, zero 404 errors.
+ * Handles audio playback for the GTA 6 fund:
+ * - Plays the 5 user-provided meme sound effects on amount selection
+ * - Web Audio API synthesized celebration fanfares for missions & cheats
  */
 
 class SoundController {
   private ctx: AudioContext | null = null;
   public enabled: boolean = true;
+  private currentAudio: HTMLAudioElement | null = null;
+
+  // 5 user-uploaded sound effects stored in /public/sounds/
+  public readonly donateSounds: string[] = [
+    '/sounds/donate-0.mp3', // "Thank you very much, that's really nice..."
+    '/sounds/donate-1.mp3', // Dramatic suspense music
+    '/sounds/donate-2.mp3', // Heavy punch / boom
+    '/sounds/donate-3.mp3', // Goofy meme sound
+    '/sounds/donate-4.mp3', // "FAAAAH" funny scream
+  ];
+
+  private audioCache: HTMLAudioElement[] = [];
+  private lastCycleIndex: number = -1;
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      // Pre-instantiate audio objects for instant latency-free playback
+      this.donateSounds.forEach((src) => {
+        const audio = new Audio(src);
+        audio.preload = 'auto';
+        this.audioCache.push(audio);
+      });
+    }
+  }
+
+  /**
+   * Play one of the 5 user sound effects when selecting donate amount
+   * @param soundIndex Specific sound index (0-4), or omitted to cycle
+   */
+  public playDonateSound(soundIndex?: number) {
+    if (!this.enabled || typeof window === 'undefined') return;
+
+    try {
+      // Stop any currently playing audio so it doesn't overlap
+      if (this.currentAudio) {
+        this.currentAudio.pause();
+        this.currentAudio.currentTime = 0;
+      }
+
+      let idx: number;
+      if (soundIndex !== undefined && soundIndex >= 0 && soundIndex < this.donateSounds.length) {
+        idx = soundIndex;
+      } else {
+        // Cycle sequentially through the 5 sounds
+        this.lastCycleIndex = (this.lastCycleIndex + 1) % this.donateSounds.length;
+        idx = this.lastCycleIndex;
+      }
+
+      // Reuse cached element or create new
+      let audio = this.audioCache[idx];
+      if (!audio) {
+        audio = new Audio(this.donateSounds[idx]);
+        this.audioCache[idx] = audio;
+      }
+
+      audio.currentTime = 0;
+      audio.volume = 0.9;
+      this.currentAudio = audio;
+
+      const promise = audio.play();
+      if (promise !== undefined) {
+        promise.catch((err) => {
+          // In case browser autoplay policy requires user gesture
+          console.warn('Playback prevented:', err);
+        });
+      }
+    } catch (e) {
+      console.warn('Audio play error:', e);
+    }
+  }
 
   private getContext(): AudioContext | null {
     if (typeof window === 'undefined') return null;
@@ -22,42 +93,10 @@ class SoundController {
   }
 
   /**
-   * Classic Ka-Ching / Coin collection sound
+   * Coin / Click fallback sound
    */
   public playCoin() {
-    if (!this.enabled) return;
-    const ctx = this.getContext();
-    if (!ctx) return;
-
-    try {
-      const now = ctx.currentTime;
-      const osc1 = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc1.type = 'sine';
-      osc2.type = 'triangle';
-
-      osc1.frequency.setValueAtTime(987.77, now); // B5
-      osc1.frequency.setValueAtTime(1318.51, now + 0.08); // E6
-
-      osc2.frequency.setValueAtTime(493.88, now);
-      osc2.frequency.setValueAtTime(659.25, now + 0.08);
-
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
-
-      osc1.connect(gain);
-      osc2.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc1.start(now);
-      osc2.start(now);
-      osc1.stop(now + 0.5);
-      osc2.stop(now + 0.5);
-    } catch {
-      // Audio context might be restricted before user gesture
-    }
+    this.playDonateSound();
   }
 
   /**
@@ -65,6 +104,10 @@ class SoundController {
    */
   public playMissionPassed() {
     if (!this.enabled) return;
+
+    // First play the "Thank You" sound (Sound 0)
+    this.playDonateSound(0);
+
     const ctx = this.getContext();
     if (!ctx) return;
 
@@ -86,7 +129,6 @@ class SoundController {
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(freq, now + time);
 
-        // Lowpass filter for smooth 80s synth brass feel
         const filter = ctx.createBiquadFilter();
         filter.type = 'lowpass';
         filter.frequency.setValueAtTime(1200, now + time);
@@ -103,7 +145,7 @@ class SoundController {
         osc.stop(now + time + dur);
       });
     } catch {
-      // Ignore audio restriction
+      // Ignore
     }
   }
 
@@ -117,7 +159,7 @@ class SoundController {
 
     try {
       const now = ctx.currentTime;
-      const tones = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6 quick run
+      const tones = [523.25, 659.25, 783.99, 1046.5];
       tones.forEach((freq, idx) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
