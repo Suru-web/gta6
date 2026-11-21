@@ -4,37 +4,51 @@ let redisClient: Redis | null = null;
 
 /**
  * Dynamically resolves Upstash Redis URL and Token from process.env at runtime.
- * Handles any environment variable naming convention created by Vercel / Upstash.
+ * Explicitly rejects read-only tokens and prioritizes read-write credentials.
  */
 export function resolveRedisCredentials(): { url?: string; token?: string; detectedKeys: string[] } {
   const detectedKeys: string[] = [];
   const env = process.env;
 
-  // 1. Direct standard names
+  // 1. Direct standard names (including Vercel STORAGE_ prefix)
   let url =
     env.UPSTASH_REDIS_REST_URL ||
+    env.STORAGE_KV_REST_API_URL ||
     env.KV_REST_API_URL ||
+    env.STORAGE_UPSTASH_REDIS_REST_URL ||
     env.REDIS_REST_API_URL ||
     env.UPSTASH_URL ||
     env.KV_URL;
 
+  // Prioritize Read-Write token (NEVER pick read-only tokens)
   let token =
     env.UPSTASH_REDIS_REST_TOKEN ||
+    env.STORAGE_KV_REST_API_TOKEN ||
     env.KV_REST_API_TOKEN ||
+    env.STORAGE_UPSTASH_REDIS_REST_TOKEN ||
     env.REDIS_REST_API_TOKEN ||
     env.UPSTASH_TOKEN ||
     env.KV_TOKEN;
 
+  // Track direct keys if present
   if (env.UPSTASH_REDIS_REST_URL) detectedKeys.push('UPSTASH_REDIS_REST_URL');
-  if (env.KV_REST_API_URL) detectedKeys.push('KV_REST_API_URL');
-  if (env.UPSTASH_REDIS_REST_TOKEN) detectedKeys.push('UPSTASH_REDIS_REST_TOKEN');
-  if (env.KV_REST_API_TOKEN) detectedKeys.push('KV_REST_API_TOKEN');
+  else if (env.STORAGE_KV_REST_API_URL) detectedKeys.push('STORAGE_KV_REST_API_URL');
+  else if (env.KV_REST_API_URL) detectedKeys.push('KV_REST_API_URL');
 
-  // 2. If not found, scan all process.env keys for any Upstash / KV variables
+  if (env.UPSTASH_REDIS_REST_TOKEN) detectedKeys.push('UPSTASH_REDIS_REST_TOKEN');
+  else if (env.STORAGE_KV_REST_API_TOKEN) detectedKeys.push('STORAGE_KV_REST_API_TOKEN');
+  else if (env.KV_REST_API_TOKEN) detectedKeys.push('KV_REST_API_TOKEN');
+
+  // 2. If not found via standard names, scan all process.env keys
   if (!url || !token) {
     for (const [key, val] of Object.entries(env)) {
       if (!val || typeof val !== 'string') continue;
       const upperKey = key.toUpperCase();
+
+      // STRICTLY IGNORE any Read-Only tokens
+      if (upperKey.includes('READ_ONLY') || upperKey.includes('READONLY')) {
+        continue;
+      }
 
       // Look for Upstash REST URL
       if (!url) {
@@ -51,7 +65,7 @@ export function resolveRedisCredentials(): { url?: string; token?: string; detec
         }
       }
 
-      // Look for Token
+      // Look for Read-Write Token
       if (!token) {
         if (
           (upperKey.includes('UPSTASH') || upperKey.includes('REDIS') || upperKey.includes('KV')) &&
@@ -96,7 +110,12 @@ export function isRedisConfigured(): boolean {
   return Boolean(url && token);
 }
 
-export async function testRedisConnection(): Promise<{ connected: boolean; error?: string; latencyMs?: number }> {
+export async function testRedisConnection(): Promise<{
+  connected: boolean;
+  canWrite?: boolean;
+  error?: string;
+  latencyMs?: number;
+}> {
   const client = getRedisClient();
   if (!client) {
     return { connected: false, error: 'No Redis credentials found in process.env' };
@@ -106,8 +125,19 @@ export async function testRedisConnection(): Promise<{ connected: boolean; error
   try {
     const pingRes = await client.ping();
     const latencyMs = Date.now() - start;
-    const ok = pingRes === 'PONG' || !!pingRes;
-    return { connected: ok, latencyMs };
+
+    if (pingRes !== 'PONG' && !pingRes) {
+      return { connected: false, error: 'Ping failed' };
+    }
+
+    // Verify read-write capabilities
+    try {
+      await client.set('gta6_health_ping', Date.now());
+      return { connected: true, canWrite: true, latencyMs };
+    } catch (writeErr: unknown) {
+      const msg = writeErr instanceof Error ? writeErr.message : String(writeErr);
+      return { connected: false, canWrite: false, latencyMs, error: `Write failed (Read-Only Token?): ${msg}` };
+    }
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     console.warn('Redis test ping failed:', msg);

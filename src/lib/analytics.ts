@@ -34,10 +34,17 @@ export async function getAnalyticsData(): Promise<AnalyticsRecord> {
   const redis = getRedisClient();
   if (redis) {
     try {
-      const data = await redis.get<AnalyticsRecord>(REDIS_ANALYTICS_KEY);
-      if (data && typeof data.totalVisits === 'number') {
-        memoryAnalytics = data;
-        return data;
+      let data = await redis.get<AnalyticsRecord | string>(REDIS_ANALYTICS_KEY);
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch {
+          // ignore
+        }
+      }
+      if (data && typeof (data as AnalyticsRecord).totalVisits === 'number') {
+        memoryAnalytics = data as AnalyticsRecord;
+        return data as AnalyticsRecord;
       }
     } catch (e) {
       console.warn('Redis analytics read error:', e);

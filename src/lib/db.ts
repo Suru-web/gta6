@@ -29,11 +29,20 @@ export async function getDonations(): Promise<Donation[]> {
   const redis = getRedisClient();
   if (redis) {
     try {
-      const data = await redis.get<Donation[]>(REDIS_KEY);
+      let data = await redis.get<Donation[] | string>(REDIS_KEY);
+      if (typeof data === 'string') {
+        try {
+          data = JSON.parse(data);
+        } catch {
+          // ignore
+        }
+      }
       if (data && Array.isArray(data)) {
         return data;
       }
-      return [];
+      if (data === null || data === undefined) {
+        return [];
+      }
     } catch (error) {
       console.warn('Redis read error, falling back to file/memory:', error);
     }
