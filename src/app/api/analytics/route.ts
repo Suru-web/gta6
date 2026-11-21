@@ -14,7 +14,7 @@ export async function GET() {
     );
   } catch (err) {
     console.error('GET /api/analytics error:', err);
-    return NextResponse.json({ success: true, totalVisits: 1428 });
+    return NextResponse.json({ success: true, totalVisits: 0 });
   }
 }
 
@@ -34,6 +34,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, totalVisits: result.totalVisits });
   } catch (err) {
     console.error('POST /api/analytics error:', err);
-    return NextResponse.json({ success: true, totalVisits: 1428 });
+    return NextResponse.json({ success: true, totalVisits: 0 });
   }
 }

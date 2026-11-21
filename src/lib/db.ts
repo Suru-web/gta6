@@ -43,12 +43,10 @@ export async function getDonations(): Promise<Donation[]> {
   if (redisClient) {
     try {
       const data = await redisClient.get<Donation[]>(REDIS_KEY);
-      if (data && Array.isArray(data) && data.length > 0) {
+      if (data && Array.isArray(data)) {
         return data;
       }
-      // If redis is empty, seed it
-      await redisClient.set(REDIS_KEY, seedDonations);
-      return seedDonations as Donation[];
+      return [];
     } catch (error) {
       console.warn('Redis read error, falling back to file/memory:', error);
     }
@@ -60,18 +58,17 @@ export async function getDonations(): Promise<Donation[]> {
     if (fs.existsSync(filePath)) {
       const content = fs.readFileSync(filePath, 'utf-8');
       const parsed = JSON.parse(content);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         memoryDonations = parsed;
         return parsed;
       }
     } else {
-      // Create with seed data if possible
       try {
         const dir = path.dirname(filePath);
         if (!fs.existsSync(dir)) {
           fs.mkdirSync(dir, { recursive: true });
         }
-        fs.writeFileSync(filePath, JSON.stringify(seedDonations, null, 2), 'utf-8');
+        fs.writeFileSync(filePath, JSON.stringify([], null, 2), 'utf-8');
       } catch {
         // Ignore write error on read-only environments
       }

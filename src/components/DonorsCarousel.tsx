@@ -108,38 +108,50 @@ export const DonorsCarousel: React.FC<DonorsCarouselProps> = ({ donations }) => 
         </div>
 
         {/* The Grid of Donor Cards */}
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-          {displayed.map((item) => (
-            <div
-              key={item.id}
-              className="flex flex-col justify-between rounded-2xl border border-white/[0.06] bg-[#120b22]/70 p-4 transition-all hover:border-white/[0.15] backdrop-blur-xl"
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold text-[#a19bb5]">
-                    {item.badge}
-                  </span>
-                  <span className="font-bebas text-xl font-bold text-[#fca47a]">
-                    ₹{item.amount}
-                  </span>
+        {displayed.length === 0 ? (
+          <div className="mt-6 rounded-2xl border border-white/[0.08] bg-[#120b22]/50 p-8 text-center backdrop-blur-xl">
+            <span className="text-3xl block mb-2">🌴</span>
+            <h3 className="font-bebas text-2xl uppercase tracking-wider text-[#fdfbf7]">
+              NO BACKERS YET — BE THE FIRST LEGEND
+            </h3>
+            <p className="mt-1 text-xs text-[#a19bb5] max-w-sm mx-auto">
+              The Wall of Legends is clean and ready. Contribute any amount to join the archives!
+            </p>
+          </div>
+        ) : (
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {displayed.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-col justify-between rounded-2xl border border-white/[0.06] bg-[#120b22]/70 p-4 transition-all hover:border-white/[0.15] backdrop-blur-xl"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-[#a19bb5]">
+                      {item.badge}
+                    </span>
+                    <span className="font-bebas text-xl font-bold text-[#fca47a]">
+                      ₹{item.amount}
+                    </span>
+                  </div>
+
+                  <h3 className="mt-2 font-bebas text-xl font-bold tracking-wide text-[#fdfbf7]">
+                    {item.name}
+                  </h3>
+
+                  <p className="mt-1 text-xs text-[#a19bb5] italic line-clamp-2">
+                    &ldquo;{item.message}&rdquo;
+                  </p>
                 </div>
 
-                <h3 className="mt-2 font-bebas text-xl font-bold tracking-wide text-[#fdfbf7]">
-                  {item.name}
-                </h3>
-
-                <p className="mt-1 text-xs text-[#a19bb5] italic line-clamp-2">
-                  &ldquo;{item.message}&rdquo;
-                </p>
+                <div className="mt-3 flex items-center justify-between border-t border-white/[0.05] pt-2 text-[10px] text-[#6c637e]">
+                  <span>Vice City Backer</span>
+                  <span>{formatTime(item.timestamp)}</span>
+                </div>
               </div>
-
-              <div className="mt-3 flex items-center justify-between border-t border-white/[0.05] pt-2 text-[10px] text-[#6c637e]">
-                <span>Vice City Backer</span>
-                <span>{formatTime(item.timestamp)}</span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* View More / View Less */}
         {filtered.length > 6 && (

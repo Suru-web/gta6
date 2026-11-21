@@ -45,7 +45,7 @@ export default function HomePage() {
   const [selectedPayAmount, setSelectedPayAmount] = useState<number>(69);
   const [isThankYouOpen, setIsThankYouOpen] = useState(false);
   const [latestDonation, setLatestDonation] = useState<Donation | null>(null);
-  const [totalVisits, setTotalVisits] = useState<number>(1428);
+  const [totalVisits, setTotalVisits] = useState<number>(0);
 
   // Track visit and fetch total visits
   useEffect(() => {
@@ -100,44 +100,9 @@ export default function HomePage() {
       const res = await fetch('/api/donations');
       const data = await res.json();
       if (data.success && Array.isArray(data.donations)) {
-        let merged = [...data.donations];
-        try {
-          const localOnly = JSON.parse(localStorage.getItem('my_gta6_donations') || '[]');
-          if (Array.isArray(localOnly) && localOnly.length > 0) {
-            const existingIds = new Set(merged.map((d) => d.id));
-            localOnly.forEach((localD: Donation) => {
-              if (!existingIds.has(localD.id)) {
-                merged = [localD, ...merged];
-              }
-            });
-          }
-        } catch {
-          // ignore
-        }
-
-        setDonations(merged);
+        setDonations(data.donations);
         if (data.stats) {
-          const totalRaised = merged.reduce((s, d) => s + (Number(d.amount) || 0), 0);
-          setStats({
-            targetAmount: SITE_CONFIG.targetAmount,
-            totalRaised,
-            totalDonors: merged.length,
-            percentComplete: Math.min(
-              100,
-              Number(((totalRaised / SITE_CONFIG.targetAmount) * 100).toFixed(1))
-            ),
-            wantedLevel:
-              totalRaised >= SITE_CONFIG.targetAmount
-                ? 5
-                : totalRaised >= SITE_CONFIG.targetAmount * 0.75
-                ? 4
-                : totalRaised >= SITE_CONFIG.targetAmount * 0.5
-                ? 3
-                : totalRaised >= SITE_CONFIG.targetAmount * 0.25
-                ? 2
-                : 1,
-            remainingAmount: Math.max(0, SITE_CONFIG.targetAmount - totalRaised),
-          });
+          setStats(data.stats);
         }
       }
     } catch (err) {

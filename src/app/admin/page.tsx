@@ -24,7 +24,6 @@ import {
   ShieldAlert,
 } from 'lucide-react';
 import { UpiConfig, Donation, SiteStats } from '@/types/donation';
-import { sounds } from '@/lib/sounds';
 
 interface AdminAnalytics {
   totalVisits: number;
@@ -127,12 +126,10 @@ export default function AdminPage() {
 
       const data = await res.json();
       if (data.success) {
-        sounds.playMissionPassed();
         setIsAuthenticated(true);
         localStorage.setItem('gta6_admin_auth', 'true');
         loadAdminData();
       } else {
-        sounds.playClick();
         setLoginError(data.error || 'Invalid credentials');
       }
     } catch {
@@ -143,7 +140,6 @@ export default function AdminPage() {
   };
 
   const handleLogout = async () => {
-    sounds.playClick();
     try {
       await fetch('/api/admin/logout', { method: 'POST' });
     } catch {
@@ -163,14 +159,12 @@ export default function AdminPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer gta6_admin_secret_token_99999',
         },
         body: JSON.stringify(upiConfig),
       });
 
       const data = await res.json();
       if (data.success) {
-        sounds.playMissionPassed();
         setSaveSuccess(true);
         setTimeout(() => setSaveSuccess(false), 4000);
       }
@@ -186,7 +180,6 @@ export default function AdminPage() {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        sounds.playCoin();
         setUpiConfig((prev) => ({ ...prev, customQrUrl: reader.result as string }));
       };
       reader.readAsDataURL(file);
@@ -201,7 +194,6 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (data.success) {
-        sounds.playClick();
         setDonations(data.donations || []);
         setStats(data.stats || null);
       }
@@ -377,7 +369,7 @@ export default function AdminPage() {
             <div className="rounded-2xl border border-white/10 bg-[#120b22] p-4 text-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Visits</span>
               <span className="font-bebas text-3xl font-extrabold text-[#fca47a]">
-                {analytics?.totalVisits?.toLocaleString('en-IN') ?? '1,428'}
+                {analytics?.totalVisits?.toLocaleString('en-IN') ?? '0'}
               </span>
               <span className="text-[10px] text-slate-500 block">Public Site Hits</span>
             </div>
@@ -386,7 +378,7 @@ export default function AdminPage() {
             <div className="rounded-2xl border border-white/10 bg-[#120b22] p-4 text-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Unique Visitors</span>
               <span className="font-bebas text-3xl font-extrabold text-[#fdfbf7]">
-                {analytics?.uniqueVisitors?.toLocaleString('en-IN') ?? '864'}
+                {analytics?.uniqueVisitors?.toLocaleString('en-IN') ?? '0'}
               </span>
               <span className="text-[10px] text-slate-500 block">Distinct Users</span>
             </div>
@@ -404,7 +396,7 @@ export default function AdminPage() {
             <div className="rounded-2xl border border-white/10 bg-[#120b22] p-4 text-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Conversion Rate</span>
               <span className="font-bebas text-3xl font-extrabold text-[#e86b97]">
-                {analytics?.conversionRate ?? 1.27}%
+                {analytics?.conversionRate ?? 0}%
               </span>
               <span className="text-[10px] text-slate-500 block">Visits to Paid</span>
             </div>
@@ -413,7 +405,7 @@ export default function AdminPage() {
             <div className="rounded-2xl border border-white/10 bg-[#120b22] p-4 text-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Avg Donation</span>
               <span className="font-bebas text-3xl font-extrabold text-[#c084fc]">
-                ₹{analytics?.avgDonation ?? 103}
+                ₹{analytics?.avgDonation ?? 0}
               </span>
               <span className="text-[10px] text-slate-500 block">Per Backer</span>
             </div>
@@ -422,7 +414,7 @@ export default function AdminPage() {
             <div className="rounded-2xl border border-white/10 bg-[#120b22] p-4 text-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Top Whale</span>
               <span className="font-bebas text-3xl font-extrabold text-amber-300">
-                ₹{analytics?.highestDonation ?? 500}
+                ₹{analytics?.highestDonation ?? 0}
               </span>
               <span className="text-[10px] text-slate-500 block">Biggest Donor</span>
             </div>

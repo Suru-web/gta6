@@ -29,12 +29,10 @@ export interface AnalyticsRecord {
 }
 
 const defaultAnalytics: AnalyticsRecord = {
-  totalVisits: 1428,
-  uniqueVisitorIds: ['vis-seed-1', 'vis-seed-2', 'vis-seed-3'],
-  lastVisited: Date.now(),
-  dailyVisits: {
-    '2026-11-21': 1428,
-  },
+  totalVisits: 0,
+  uniqueVisitorIds: [],
+  lastVisited: 0,
+  dailyVisits: {},
 };
 
 let memoryAnalytics: AnalyticsRecord = { ...defaultAnalytics };
@@ -139,10 +137,7 @@ export async function getDetailedAnalytics() {
 
   const totalRaised = donations.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
   const totalDonors = donations.length;
-  const uniqueVisitorsCount = Math.max(
-    totalDonors,
-    analytics.uniqueVisitorIds ? analytics.uniqueVisitorIds.length : 1
-  );
+  const uniqueVisitorsCount = analytics.uniqueVisitorIds ? analytics.uniqueVisitorIds.length : 0;
 
   const conversionRate = uniqueVisitorsCount > 0
     ? Number(((totalDonors / uniqueVisitorsCount) * 100).toFixed(2))
