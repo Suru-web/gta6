@@ -6,53 +6,44 @@ import { sounds } from '@/lib/sounds';
 export const MemeReasonsGrid: React.FC = () => {
   const cards = [
     {
-      title: "12 YEARS OF WAITING ⏳",
-      subtitle: "My Youth Is Fading",
-      body: "GTA V launched in 2013. I was a child. I now have back pain, taxes, and zero console. Have mercy.",
-      badge: "Pure Pain",
-      border: "border-[#e86b97]",
-      shadow: "brutal-shadow-rose",
-      icon: "⏳",
+      title: "12 Years in Exile",
+      tagline: "2013 to 2026",
+      body: "GTA V dropped when I was doing school homework. I now have back pain, taxes, and no console. Have mercy on an aging gamer.",
+      tag: "Timeline",
     },
     {
-      title: "MY CURRENT LAPTOP 💻🔥",
-      subtitle: "Pre-Historic Relic",
-      body: "Intel Integrated Graphics. It sounds like an Apache attack helicopter if I open 3 tabs of Chrome.",
-      badge: "Fire Hazard",
-      border: "border-[#fca47a]",
-      shadow: "brutal-shadow-peach",
-      icon: "🔥",
+      title: "Prehistoric Hardware",
+      tagline: "Thermal Warning",
+      body: "My laptop runs on Intel integrated graphics. It sounds like an Apache attack helicopter whenever three Chrome tabs open.",
+      tag: "Hardware",
     },
     {
-      title: "THE 480P TRAUMA 📺",
-      subtitle: "Fate Worse Than Death",
-      body: "If you don't donate, I'll be forced to watch some screaming 14-year-old YouTuber spoil the whole story.",
-      badge: "Emergency",
-      border: "border-[#c52233]",
-      shadow: "brutal-shadow-rose",
-      icon: "📺",
+      title: "The 480p Trauma",
+      tagline: "A Fate Worse Than Death",
+      body: "Without a console, I will be forced to watch screaming 14-year-olds with clickbait thumbnails spoil the entire campaign.",
+      tag: "Deterrence",
     },
     {
-      title: "PEAK FINANCIAL ROI 📈",
-      subtitle: "Warren Buffett Approved",
-      body: "₹10 on chai = lasts 10 minutes. ₹10 donated to my GTA 6 fund = 150 hours of chaos with Lucia & Jason.",
-      badge: "1000% Gain",
-      border: "border-[#ffb703]",
-      shadow: "brutal-shadow-white",
-      icon: "📈",
+      title: "Unrivaled ROI",
+      tagline: "Asset Valuation",
+      body: "₹10 on tapri chai evaporates in 10 minutes. ₹10 donated here produces 150+ hours of chaos across Leonida alongside Lucia & Jason.",
+      tag: "Economics",
     },
   ];
 
   return (
-    <section className="relative px-4 py-8">
+    <section className="relative px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-4xl">
-        <div className="text-center mb-6">
-          <span className="rounded-md bg-[#fca47a] px-3 py-1 font-sans text-xs font-black uppercase text-black tracking-wider">
-            WHY YOUR ₹1 TO ₹100 MATTERS
+        <div className="text-center mb-8">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-[#fca47a] block">
+            Campaign Dossier // Intel
           </span>
-          <h2 className="mt-2 font-bebas text-3xl sm:text-5xl uppercase tracking-wider text-white drop-shadow">
-            THE HARD COLD GAMER FACTS
+          <h2 className="mt-1 font-bebas text-3xl sm:text-4xl uppercase tracking-wider text-[#fdfbf7]">
+            THE CASE FOR SPONSORSHIP
           </h2>
+          <p className="mt-1 text-xs text-[#a19bb5] max-w-lg mx-auto">
+            A sober assessment of why this mission cannot afford to fail.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -60,18 +51,16 @@ export const MemeReasonsGrid: React.FC = () => {
             <div
               key={idx}
               onClick={() => sounds.playCoin()}
-              className={`cursor-pointer rounded-2xl border-2 ${c.border} bg-[#1c1233]/90 p-5 ${c.shadow} transition-transform hover:-translate-y-1 backdrop-blur-md`}
+              className="cursor-pointer rounded-2xl border border-white/[0.08] bg-[#120b22]/70 p-5 backdrop-blur-xl transition-all hover:border-white/[0.18] hover:bg-[#160e29]/90 group"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-3xl">{c.icon}</span>
-                <span className="rounded bg-white/10 px-2 py-0.5 text-[10px] font-black uppercase text-[#fca47a]">
-                  {c.badge}
-                </span>
+              <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-[#a19bb5]">
+                <span>{c.tag}</span>
+                <span className="text-[#fca47a]">{c.tagline}</span>
               </div>
-              <h3 className="mt-3 font-bebas text-2xl font-bold uppercase tracking-wide text-white">
+              <h3 className="mt-2.5 font-bebas text-2xl font-bold uppercase tracking-wide text-[#fdfbf7] group-hover:text-[#fca47a] transition-colors">
                 {c.title}
               </h3>
-              <p className="mt-1 text-xs font-medium text-slate-300 leading-relaxed">
+              <p className="mt-1 text-xs text-[#a19bb5] leading-relaxed">
                 {c.body}
               </p>
             </div>

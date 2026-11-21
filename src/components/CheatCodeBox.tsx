@@ -35,18 +35,18 @@ export const CheatCodeBox: React.FC = () => {
   };
 
   return (
-    <section className="relative py-8">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6">
-        <div className="rounded-2xl border border-cyan-500/30 bg-[#0c051a] p-5 sm:p-6 backdrop-blur-md">
+    <section className="relative py-6 sm:py-8">
+      <div className="mx-auto max-w-3xl px-4">
+        <div className="rounded-2xl border border-white/[0.08] bg-[#120b22]/70 p-5 backdrop-blur-xl">
           <div className="flex items-center gap-2 mb-2">
-            <Terminal size={16} className="text-cyan-400" />
-            <span className="font-mono text-xs uppercase tracking-wider text-cyan-300 font-bold">
-              Vice City Cheat Terminal
+            <Terminal size={15} className="text-[#fca47a]" />
+            <span className="font-mono text-xs uppercase tracking-wider text-[#fca47a] font-bold">
+              Leonida Developer Terminal
             </span>
           </div>
 
-          <p className="text-xs text-slate-400 mb-3">
-            Type classic GTA cheats (<code className="text-pink-400">HESOYAM</code>, <code className="text-pink-400">BAGUVIX</code>, <code className="text-pink-400">SEAWAYS</code>, <code className="text-pink-400">LEAVEMEALONE</code>) for secret effects.
+          <p className="text-xs text-[#a19bb5] mb-3">
+            Enter classic Rockstar cheats (<code className="text-[#fdfbf7] bg-white/[0.06] px-1.5 py-0.5 rounded">HESOYAM</code>, <code className="text-[#fdfbf7] bg-white/[0.06] px-1.5 py-0.5 rounded">BAGUVIX</code>, <code className="text-[#fdfbf7] bg-white/[0.06] px-1.5 py-0.5 rounded">SEAWAYS</code>) for secret effects.
           </p>
 
           <form onSubmit={handleTestCheat} className="flex gap-2">
@@ -54,20 +54,20 @@ export const CheatCodeBox: React.FC = () => {
               type="text"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="ENTER CHEAT (e.g. HESOYAM)"
-              className="flex-1 rounded-xl border border-cyan-500/40 bg-black/50 px-4 py-2 font-mono text-sm tracking-wider text-cyan-300 placeholder-slate-600 focus:border-pink-500 focus:outline-none"
+              placeholder="ENTER CODE (e.g. HESOYAM)"
+              className="flex-1 rounded-xl border border-white/[0.1] bg-black/50 px-4 py-2 font-mono text-xs tracking-wider text-[#fdfbf7] placeholder-[#6c637e] focus:border-[#fca47a] focus:outline-none"
             />
             <button
               type="submit"
-              className="rounded-xl border border-cyan-400/50 bg-cyan-950/60 px-5 py-2 text-xs font-bold uppercase tracking-wider text-cyan-300 hover:bg-cyan-900/60 transition-colors"
+              className="rounded-xl border border-white/[0.1] bg-[#fca47a] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#090514] hover:bg-[#ffb78e] transition-all"
             >
               Execute
             </button>
           </form>
 
           {activeMessage && (
-            <div className="mt-3 flex items-center gap-2 rounded-xl border border-pink-500/40 bg-pink-950/50 p-3 text-xs text-pink-200 animate-in fade-in">
-              <Sparkles size={14} className="text-amber-400 shrink-0" />
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-[#e86b97]/40 bg-[#e86b97]/15 p-3 text-xs text-[#fdfbf7] animate-in fade-in">
+              <Sparkles size={14} className="text-[#fca47a] shrink-0" />
               <span>{activeMessage}</span>
             </div>
           )}

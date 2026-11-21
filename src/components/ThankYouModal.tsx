@@ -83,7 +83,7 @@ export const ThankYouModal: React.FC<ThankYouModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
-      <div className="relative w-full max-w-lg rounded-3xl border-2 border-pink-500 bg-[#12082b] p-6 sm:p-8 shadow-[0_0_60px_rgba(255,0,127,0.4)] animate-in fade-in zoom-in-95 duration-200 text-center">
+      <div className="relative w-full max-w-lg rounded-3xl border border-white/[0.12] bg-[#120b22] p-6 sm:p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-center">
         {/* Close Button */}
         <button
           onClick={() => {
@@ -96,8 +96,8 @@ export const ThankYouModal: React.FC<ThankYouModalProps> = ({
         </button>
 
         {/* GTA MISSION PASSED BANNER */}
-        <div className="mx-auto inline-block rounded-xl border border-amber-400/60 bg-amber-950/60 px-6 py-2 shadow-[0_0_20px_rgba(251,191,36,0.5)]">
-          <span className="font-bebas text-2xl sm:text-3xl font-extrabold tracking-widest text-amber-300 drop-shadow">
+        <div className="mx-auto inline-block rounded-xl border border-[#fca47a]/30 bg-[#fca47a]/10 px-5 py-2">
+          <span className="font-bebas text-2xl sm:text-3xl font-extrabold tracking-widest text-[#fca47a] drop-shadow">
             ★ MISSION PASSED! RESPECT +99999 ★
           </span>
         </div>
@@ -108,17 +108,17 @@ export const ThankYouModal: React.FC<ThankYouModalProps> = ({
             {memeTier.memeAvatar}
           </div>
           <h2 className="font-bebas text-4xl sm:text-5xl uppercase tracking-wider text-white">
-            THANK YOU, <span className="gta6-gradient">{donation.name}</span>!
+            THANK YOU, <span className="gta-gradient">{donation.name}</span>!
           </h2>
-          <p className="font-bebas text-2xl text-pink-400 tracking-wide mt-1">
+          <p className="font-bebas text-2xl text-[#fca47a] tracking-wide mt-1">
             YOU ARE ABSOLUTELY GREAT! 👑
           </p>
         </div>
 
         {/* Meme Quote Box */}
-        <div className="mt-5 rounded-2xl border border-pink-500/30 bg-purple-950/40 p-4">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-pink-500/20 px-2.5 py-0.5 text-xs font-bold text-pink-300 mb-2">
-            <Sparkles size={12} className="text-amber-400" />
+        <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-left">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#e86b97]/30 bg-[#e86b97]/15 px-2.5 py-0.5 text-xs font-semibold text-[#e86b97] mb-2">
+            <Sparkles size={12} className="text-[#fca47a]" />
             {memeTier.title}
           </div>
           <p className="text-sm font-medium text-slate-200 italic">
@@ -127,27 +127,27 @@ export const ThankYouModal: React.FC<ThankYouModalProps> = ({
         </div>
 
         {/* Donation Receipt Pill */}
-        <div className="mt-5 flex items-center justify-around rounded-xl border border-purple-500/30 bg-black/40 p-3 text-xs">
+        <div className="mt-5 flex items-center justify-around rounded-xl border border-white/10 bg-white/[0.02] p-3 text-xs">
           <div>
             <span className="text-slate-400 block text-[10px] uppercase font-bold">Contribution</span>
-            <span className="font-bebas text-2xl font-bold text-emerald-400">₹{donation.amount}</span>
+            <span className="font-bebas text-2xl font-bold text-[#fca47a]">₹{donation.amount}</span>
           </div>
-          <div className="h-8 w-px bg-purple-500/20" />
+          <div className="h-8 w-px bg-white/10" />
           <div>
             <span className="text-slate-400 block text-[10px] uppercase font-bold">Badge Earned</span>
             <span className="font-medium text-slate-200">{donation.badge}</span>
           </div>
-          <div className="h-8 w-px bg-purple-500/20" />
+          <div className="h-8 w-px bg-white/10" />
           <div>
             <span className="text-slate-400 block text-[10px] uppercase font-bold">Status</span>
-            <span className="inline-flex items-center gap-1 font-bold text-cyan-400">
+            <span className="inline-flex items-center gap-1 font-bold text-emerald-400">
               <CheckCircle2 size={12} /> Live
             </span>
           </div>
         </div>
 
         {donation.message && (
-          <div className="mt-3 text-xs text-slate-300 italic">
+          <div className="mt-3 text-xs text-slate-400 italic">
             Your note: &ldquo;{donation.message}&rdquo;
           </div>
         )}
@@ -159,7 +159,7 @@ export const ThankYouModal: React.FC<ThankYouModalProps> = ({
               sounds.playClick();
               onViewHallOfFame();
             }}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-pink-600 hover:bg-pink-500 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-[0_0_20px_rgba(255,0,127,0.4)] transition-all active:scale-95"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#e86b97] to-[#fca47a] hover:opacity-95 py-3 text-xs font-extrabold uppercase tracking-wider text-black transition-all active:scale-95"
           >
             <Award size={16} />
             <span>View My Card in Hall of Fame</span>
@@ -170,7 +170,7 @@ export const ThankYouModal: React.FC<ThankYouModalProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => sounds.playClick()}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-950/40 px-4 py-3 text-xs font-bold uppercase tracking-wider text-cyan-300 hover:bg-cyan-900/50 transition-all active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-xs font-bold uppercase tracking-wider text-slate-200 hover:bg-white/10 transition-all active:scale-95"
           >
             <Share2 size={16} />
             <span>Flex on X</span>

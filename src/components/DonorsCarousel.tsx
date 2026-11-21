@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Donation } from '@/types/donation';
-import { Trophy, Flame, Clock, Sparkles } from 'lucide-react';
+import { Trophy, Flame, Clock } from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 
 interface DonorsCarouselProps {
@@ -45,33 +45,33 @@ export const DonorsCarousel: React.FC<DonorsCarouselProps> = ({ donations }) => 
   };
 
   return (
-    <section id="hall-of-fame" className="relative px-4 py-8">
+    <section id="hall-of-fame" className="relative px-4 py-8 sm:py-12">
       <div className="mx-auto max-w-4xl">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b-2 border-white/10 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 border-b border-white/[0.08] pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <Trophy size={18} className="text-yellow-400" />
-              <h2 className="font-bebas text-3xl sm:text-4xl uppercase tracking-wider text-white">
+              <Trophy size={16} className="text-[#fca47a]" />
+              <h2 className="font-bebas text-3xl sm:text-4xl uppercase tracking-wider text-[#fdfbf7]">
                 WALL OF LEGENDS ({donations.length})
               </h2>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Who paid how much for the cause. Inscribed in Vice City forever.
+            <p className="text-xs text-[#a19bb5] mt-0.5">
+              Every patron is permanently inscribed in the Vice City archives.
             </p>
           </div>
 
-          {/* Simple Tabs */}
-          <div className="flex items-center gap-1.5">
+          {/* Clean Segmented Tabs */}
+          <div className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
             <button
               onClick={() => {
                 sounds.playClick();
                 setActiveTab('all');
               }}
-              className={`rounded-xl px-3 py-1.5 text-xs font-black uppercase transition-all ${
+              className={`rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
                 activeTab === 'all'
-                  ? 'bg-[#e86b97] text-white brutal-shadow-white'
-                  : 'bg-[#1c1233] text-slate-400 hover:text-white'
+                  ? 'bg-white/[0.12] text-[#fdfbf7]'
+                  : 'text-[#a19bb5] hover:text-[#fdfbf7]'
               }`}
             >
               All
@@ -81,24 +81,24 @@ export const DonorsCarousel: React.FC<DonorsCarouselProps> = ({ donations }) => 
                 sounds.playClick();
                 setActiveTab('top');
               }}
-              className={`inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-black uppercase transition-all ${
+              className={`inline-flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
                 activeTab === 'top'
-                  ? 'bg-[#fca47a] text-black brutal-shadow-white'
-                  : 'bg-[#1c1233] text-slate-400 hover:text-white'
+                  ? 'bg-white/[0.12] text-[#fca47a]'
+                  : 'text-[#a19bb5] hover:text-[#fdfbf7]'
               }`}
             >
               <Flame size={12} />
-              <span>Top Chads</span>
+              <span>Top</span>
             </button>
             <button
               onClick={() => {
                 sounds.playClick();
                 setActiveTab('recent');
               }}
-              className={`inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-black uppercase transition-all ${
+              className={`inline-flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
                 activeTab === 'recent'
-                  ? 'bg-[#ffb703] text-black brutal-shadow-white'
-                  : 'bg-[#1c1233] text-slate-400 hover:text-white'
+                  ? 'bg-white/[0.12] text-[#e86b97]'
+                  : 'text-[#a19bb5] hover:text-[#fdfbf7]'
               }`}
             >
               <Clock size={12} />
@@ -112,29 +112,29 @@ export const DonorsCarousel: React.FC<DonorsCarouselProps> = ({ donations }) => 
           {displayed.map((item) => (
             <div
               key={item.id}
-              className="flex flex-col justify-between rounded-2xl border-2 border-white/10 bg-[#1c1233] p-4 transition-transform hover:-translate-y-0.5 hover:border-[#e86b97]/50"
+              className="flex flex-col justify-between rounded-2xl border border-white/[0.06] bg-[#120b22]/70 p-4 transition-all hover:border-white/[0.15] backdrop-blur-xl"
             >
               <div>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-300">
+                  <span className="text-[11px] font-semibold text-[#a19bb5]">
                     {item.badge}
                   </span>
-                  <span className="font-bebas text-2xl font-black text-[#fca47a]">
+                  <span className="font-bebas text-xl font-bold text-[#fca47a]">
                     ₹{item.amount}
                   </span>
                 </div>
 
-                <h3 className="mt-2 font-bebas text-xl font-bold tracking-wide text-white">
+                <h3 className="mt-2 font-bebas text-xl font-bold tracking-wide text-[#fdfbf7]">
                   {item.name}
                 </h3>
 
-                <p className="mt-1 text-xs text-slate-300 italic line-clamp-2">
+                <p className="mt-1 text-xs text-[#a19bb5] italic line-clamp-2">
                   &ldquo;{item.message}&rdquo;
                 </p>
               </div>
 
-              <div className="mt-3 flex items-center justify-between border-t border-white/5 pt-2 text-[10px] text-slate-500 font-semibold">
-                <span>Leonida Backer</span>
+              <div className="mt-3 flex items-center justify-between border-t border-white/[0.05] pt-2 text-[10px] text-[#6c637e]">
+                <span>Vice City Backer</span>
                 <span>{formatTime(item.timestamp)}</span>
               </div>
             </div>
@@ -149,9 +149,9 @@ export const DonorsCarousel: React.FC<DonorsCarouselProps> = ({ donations }) => 
                 sounds.playClick();
                 setShowAll(!showAll);
               }}
-              className="rounded-xl border-2 border-white/20 bg-purple-950/40 px-4 py-2 text-xs font-black uppercase tracking-wider text-slate-200 hover:border-pink-500 hover:text-pink-400 transition-colors"
+              className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-xs font-semibold text-[#a19bb5] hover:border-white/20 hover:text-[#fdfbf7] transition-all"
             >
-              {showAll ? '▲ Show Less' : `▼ View All ${filtered.length} Legends`}
+              {showAll ? 'Show Fewer' : `View All ${filtered.length} Backers`}
             </button>
           </div>
         )}

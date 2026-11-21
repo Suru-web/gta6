@@ -78,7 +78,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="relative w-full max-w-lg rounded-3xl border border-pink-500/50 bg-[#12082b] p-6 sm:p-8 shadow-[0_0_50px_rgba(255,0,127,0.3)] animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-lg rounded-3xl border border-white/[0.12] bg-[#120b22] p-6 sm:p-8 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         {/* Close Button */}
         <button
           onClick={() => {
@@ -92,20 +92,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* Modal Header */}
         <div className="text-center">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-pink-500/20 px-3 py-1 text-xs font-bold text-pink-300">
-            <Sparkles size={14} className="text-amber-400" />
-            <span>CONFIRM YOUR HERO CLOUT</span>
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-[#fca47a]/30 bg-[#fca47a]/10 px-3 py-1 text-xs font-semibold text-[#fca47a]">
+            <Sparkles size={13} className="text-[#fca47a]" />
+            <span>CONFIRM SPONSORSHIP</span>
           </div>
-          <h3 className="mt-2 font-bebas text-3xl sm:text-4xl uppercase tracking-wider text-white">
-            ENTER THE VICE CITY HALL OF FAME
+          <h3 className="mt-3 font-bebas text-3xl sm:text-4xl uppercase tracking-wider text-white">
+            RECORD YOUR IMMORTALITY
           </h3>
-          <p className="mt-1 text-xs sm:text-sm text-slate-300">
-            Tell us who you are so your name can be immortalized on the live ticker and carousel!
+          <p className="mt-1 text-xs sm:text-sm text-slate-400">
+            Tell us who you are so your name joins the live ticker and Wall of Legends.
           </p>
         </div>
 
         {errorMsg && (
-          <div className="mt-4 rounded-xl border border-rose-500/40 bg-rose-950/40 p-3 text-xs text-rose-300">
+          <div className="mt-4 rounded-xl border border-rose-500/30 bg-rose-950/40 p-3 text-xs text-rose-300">
             {errorMsg}
           </div>
         )}
@@ -114,8 +114,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           {/* Name Field (Optional) */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-              Your Name / Gamer Tag <span className="text-pink-400 font-normal">(Optional)</span>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+              Your Name / Alias <span className="text-[#e86b97] font-normal lowercase">(optional)</span>
             </label>
             <input
               type="text"
@@ -123,18 +123,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Tommy Vercetti, Sharmaji, LuciaFan69"
-              className="mt-1 w-full rounded-xl border border-purple-500/40 bg-purple-950/40 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-pink-500 focus:outline-none"
+              className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-[#e86b97] focus:ring-1 focus:ring-[#e86b97] focus:outline-none transition-colors"
             />
-            <span className="text-[10px] text-slate-400">Leave blank to stay &ldquo;Anonymous Legend&rdquo;</span>
+            <span className="text-[10px] text-slate-500 mt-1 block">Leave empty to display as &ldquo;Anonymous Legend&rdquo;</span>
           </div>
 
           {/* Amount Paid */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-              Amount You Donated (₹)
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+              Amount Contributed (₹)
             </label>
-            <div className="relative mt-1">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-pink-400">₹</span>
+            <div className="relative mt-1.5">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-[#e86b97]">₹</span>
               <input
                 type="number"
                 min="1"
@@ -142,15 +142,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 required
                 value={amount}
                 onChange={(e) => setAmount(Number(e.target.value))}
-                className="w-full rounded-xl border border-purple-500/40 bg-purple-950/40 pl-8 pr-4 py-2.5 text-sm font-bold text-white focus:border-pink-500 focus:outline-none"
+                className="w-full rounded-xl border border-white/10 bg-white/[0.04] pl-8 pr-4 py-2.5 text-sm font-bold text-white focus:border-[#e86b97] focus:ring-1 focus:ring-[#e86b97] focus:outline-none transition-colors"
               />
             </div>
           </div>
 
           {/* Badge Selector */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-              Choose Your Meme Badge
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+              Choose Honor Badge
             </label>
             <div className="grid grid-cols-3 gap-2">
               {SITE_CONFIG.badges.map((b) => {
@@ -163,10 +163,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       sounds.playClick();
                       setSelectedBadge(b.label);
                     }}
-                    className={`rounded-lg border p-2 text-xs font-medium transition-all text-left ${
+                    className={`rounded-xl border p-2 text-xs font-medium transition-all text-left ${
                       isSelected
-                        ? 'border-pink-500 bg-pink-950/60 text-pink-200'
-                        : 'border-purple-500/20 bg-purple-950/20 text-slate-400 hover:border-pink-500/40'
+                        ? 'border-[#e86b97] bg-[#e86b97]/15 text-white'
+                        : 'border-white/10 bg-white/[0.02] text-slate-400 hover:border-white/20 hover:text-slate-200'
                     }`}
                   >
                     <span>{b.label}</span>
@@ -178,8 +178,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Message / Roast */}
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
-              Meme Roast / Advice <span className="text-pink-400 font-normal">(Optional)</span>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+              Message or Advice <span className="text-[#e86b97] font-normal lowercase">(optional)</span>
             </label>
             <input
               type="text"
@@ -187,24 +187,24 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="e.g. Don't crash the helicopter, get the steelbook bro!"
-              className="mt-1 w-full rounded-xl border border-purple-500/40 bg-purple-950/40 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-pink-500 focus:outline-none"
+              className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-[#e86b97] focus:ring-1 focus:ring-[#e86b97] focus:outline-none transition-colors"
             />
           </div>
 
           {/* Trust Banner */}
-          <div className="flex items-center gap-2 rounded-xl bg-purple-950/30 p-2.5 text-[11px] text-slate-400">
-            <ShieldCheck size={16} className="text-cyan-400 shrink-0" />
-            <span>Honesty policy: This adds your name to the community board. Rockstar will remember this!</span>
+          <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] p-2.5 text-[11px] text-slate-400">
+            <ShieldCheck size={16} className="text-[#fca47a] shrink-0" />
+            <span>Honesty policy: Instantly adds your name to the community board. Rockstar salutes you!</span>
           </div>
 
           {/* Submit */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-600 via-rose-500 to-amber-500 py-3.5 font-sans text-sm font-bold uppercase tracking-wider text-white shadow-[0_0_25px_rgba(255,0,127,0.4)] transition-all hover:opacity-95 active:scale-95 disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#e86b97] to-[#fca47a] py-3.5 font-sans text-xs font-extrabold uppercase tracking-wider text-black shadow-lg hover:opacity-95 active:scale-[0.99] disabled:opacity-50 transition-all"
           >
-            <Send size={16} />
-            <span>{isSubmitting ? 'Recording Legend...' : 'Claim My Glory & Memes! 👑'}</span>
+            <Send size={15} />
+            <span>{isSubmitting ? 'Recording Legend...' : 'Claim My Glory 👑'}</span>
           </button>
         </form>
       </div>
