@@ -24,7 +24,7 @@ export const DonationCard: React.FC<DonationCardProps> = ({
   const [copied, setCopied] = useState<boolean>(false);
 
   const activeAmount = isCustom
-    ? Math.max(1, Math.min(100, Number(customAmount) || 1))
+    ? Math.max(1, Math.min(100000, Number(customAmount) || 1))
     : selectedAmount;
 
   // Build UPI intent link
@@ -67,7 +67,7 @@ export const DonationCard: React.FC<DonationCardProps> = ({
           {/* Card Header */}
           <div className="text-center">
             <span className="rounded-md bg-[#e86b97] px-3 py-0.5 font-sans text-xs font-black uppercase text-white tracking-wider">
-              DONATE ₹1 TO ₹100 VIA UPI
+              DONATE VIA UPI • ₹1, ₹100, OR ANY CUSTOM AMOUNT
             </span>
             <h2 className="mt-1 font-bebas text-3xl sm:text-4xl uppercase tracking-wider text-white">
               SELECT YOUR SACRIFICE & SCAN
@@ -105,32 +105,56 @@ export const DonationCard: React.FC<DonationCardProps> = ({
             })}
           </div>
 
-          {/* Custom Amount + Funny Meme Roast */}
-          <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-2 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-slate-300">Custom amount:</span>
+          {/* Custom Amount for generous helpers (₹1 to any amount > 100) */}
+          <div className="mt-3 flex flex-col sm:flex-row items-center justify-between gap-2 rounded-xl border border-white/15 bg-black/50 px-3.5 py-2.5 text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-slate-200">Custom Helper Amount:</span>
               <div className="relative">
-                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-[#e86b97]">
+                <span className="absolute left-2.5 top-1/2 -translate-y-1/2 font-bold text-[#fca47a]">
                   ₹
                 </span>
                 <input
                   type="number"
                   min="1"
-                  max="100"
+                  max="100000"
                   value={customAmount}
                   onChange={handleCustomChange}
-                  placeholder="e.g. 42"
-                  className="w-20 rounded-lg border border-[#e86b97]/50 bg-black/60 pl-6 pr-2 py-1 text-xs font-bold text-white focus:border-[#fca47a] focus:outline-none"
+                  placeholder="e.g. 250, 500, 1000+"
+                  className="w-28 rounded-lg border border-[#fca47a]/50 bg-black/70 pl-6 pr-2 py-1 text-xs font-bold text-white placeholder-slate-500 focus:border-[#fca47a] focus:outline-none"
                 />
               </div>
-              <span className="text-slate-500">(1-100)</span>
+              <span className="text-[11px] text-[#fca47a] font-medium">
+                (Donate any random amount above 100!)
+              </span>
             </div>
 
-            {currentOption && (
-              <span className="font-bold text-[#fca47a] italic text-center sm:text-right">
-                {currentOption.meme}
-              </span>
-            )}
+            <div className="text-center sm:text-right font-bold text-xs italic">
+              {isCustom ? (
+                activeAmount >= 10000 ? (
+                  <span className="text-amber-300 animate-pulse">
+                    🚀 HEIST OF THE CENTURY: Bro is literally buying the entire PS5!
+                  </span>
+                ) : activeAmount >= 1000 ? (
+                  <span className="text-[#fca47a]">
+                    👑 VICE CITY GODFATHER: Lucia & Jason salute your infinite generosity!
+                  </span>
+                ) : activeAmount > 100 ? (
+                  <span className="text-[#fca47a]">
+                    🐳 ULTRA WHALE TIER: Above and beyond ₹100! Respect +99999!
+                  </span>
+                ) : (
+                  <span className="text-slate-300">
+                    Custom sacrifice of ₹{activeAmount} prepared!
+                  </span>
+                )
+              ) : (
+                currentOption && (
+                  <span className="text-[#fca47a]">
+                    {currentOption.meme}
+                  </span>
+                )
+              )}
+            </div>
           </div>
 
           {/* THE CLEAN QR CODE & PAYMENT SECTION */}

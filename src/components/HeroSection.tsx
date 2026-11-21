@@ -69,7 +69,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ stats, onScrollToDonat
         {/* Tagline */}
         <p className="mx-auto mt-2 max-w-2xl text-xs sm:text-sm font-medium text-slate-200 drop-shadow">
           Rockstar waited <strong className="text-[#fca47a] font-bold">12+ years</strong>. My wallet has <strong className="text-[#ffb703] font-bold">₹0.00</strong>.
-          Spare <strong className="text-[#e86b97] font-bold">₹1 to ₹100</strong> via UPI to save a fellow gamer from watching 480p YouTube walkthroughs!
+          Spare <strong className="text-[#e86b97] font-bold">₹1, ₹100, or any custom amount</strong> via UPI to save a fellow gamer from watching 480p YouTube walkthroughs!
         </p>
 
         {/* HILARIOUS BEGGING MASCOT SPEECH BUBBLE */}
