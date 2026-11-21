@@ -1,26 +1,139 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-neon-pink: #ff007f;
+  --color-neon-cyan: #00f0ff;
+  --color-sunset-orange: #ff5e36;
+  --color-sunset-gold: #ffb703;
+  --color-vice-dark: #090414;
+  --color-vice-surface: #140a2b;
+  --color-vice-card: rgba(26, 14, 53, 0.75);
+  
+  --font-bebas: var(--font-bebas);
+  --font-outfit: var(--font-outfit);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #090414;
+  --foreground: #f8fafc;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #090414;
+  color: #f8fafc;
+  font-family: var(--font-outfit), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Vice City Scanlines & Atmosphere */
+.vice-bg {
+  background: 
+    radial-gradient(circle at 50% 0%, rgba(255, 0, 127, 0.18) 0%, transparent 60%),
+    radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 15% 70%, rgba(121, 40, 202, 0.2) 0%, transparent 55%),
+    #090414;
+}
+
+/* Subtle 80s Perspective Synth Grid at bottom */
+.synth-grid {
+  background-image: 
+    linear-gradient(rgba(0, 240, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 0, 127, 0.1) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Font classes */
+.font-bebas {
+  font-family: var(--font-bebas), sans-serif;
+  letter-spacing: 0.04em;
+}
+
+.font-outfit {
+  font-family: var(--font-outfit), sans-serif;
+}
+
+/* Neon Text Glows */
+.neon-glow-pink {
+  text-shadow: 
+    0 0 10px rgba(255, 0, 127, 0.7),
+    0 0 25px rgba(255, 0, 127, 0.5),
+    0 0 50px rgba(255, 0, 127, 0.3);
+}
+
+.neon-glow-cyan {
+  text-shadow: 
+    0 0 10px rgba(0, 240, 255, 0.7),
+    0 0 25px rgba(0, 240, 255, 0.5),
+    0 0 50px rgba(0, 240, 255, 0.3);
+}
+
+.neon-glow-gold {
+  text-shadow: 
+    0 0 10px rgba(255, 183, 3, 0.7),
+    0 0 25px rgba(255, 183, 3, 0.4);
+}
+
+/* Neon Box Borders */
+.neon-border-pink {
+  box-shadow: 
+    0 0 15px rgba(255, 0, 127, 0.25),
+    inset 0 0 15px rgba(255, 0, 127, 0.1);
+}
+
+.neon-border-cyan {
+  box-shadow: 
+    0 0 15px rgba(0, 240, 255, 0.25),
+    inset 0 0 15px rgba(0, 240, 255, 0.1);
+}
+
+/* GTA VI Logo Gradient */
+.gta6-gradient {
+  background: linear-gradient(135deg, #ff007f 0%, #ff5e36 45%, #ffb703 80%, #00f0ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Glass Card */
+.glass-panel {
+  background: rgba(19, 10, 42, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Ticker Marquee Keyframes */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #090414;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ff007f;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00f0ff;
 }
