@@ -53,10 +53,11 @@ export const SITE_CONFIG = {
   ],
 
   badges: [
-    { id: "chad", label: "👑 Gigachad", icon: "👑" },
-    { id: "vice", label: "🌴 Vice Citizen", icon: "🌴" },
+    { id: "godfather", label: "🚀 Leonida Godfather", icon: "🚀" },
     { id: "heist", label: "💰 Heist Master", icon: "💰" },
+    { id: "chad", label: "👑 Gigachad", icon: "👑" },
     { id: "chaos", label: "💣 Chaos Agent", icon: "💣" },
+    { id: "vice", label: "🌴 Vice Citizen", icon: "🌴" },
     { id: "homie", label: "🤝 Loyal Homie", icon: "🤝" },
     { id: "clown", label: "🤡 Broke Comrade", icon: "🤡" }
   ],
@@ -107,3 +108,14 @@ export const SITE_CONFIG = {
     { amount: 69900, title: "PS5 Disc + GTA 6 Pre-Order UNLOCKED", desc: "ULTIMATE VICTORY! Lucia & Jason awaiting!", reached: false }
   ]
 };
+
+export function getBadgeForAmount(amount: number): string {
+  const num = Number(amount) || 0;
+  if (num >= 1000) return '🚀 Leonida Godfather';
+  if (num >= 500) return '💰 Heist Master';
+  if (num >= 100) return '👑 Gigachad';
+  if (num === 69) return '💣 Chaos Agent';
+  if (num >= 50) return '🌴 Vice Citizen';
+  if (num >= 10) return '🤝 Loyal Homie';
+  return '🤡 Broke Comrade';
+}

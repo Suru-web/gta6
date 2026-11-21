@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDonations, addDonation, computeStats, deleteDonation } from '@/lib/db';
 import { verifyAdmin } from '@/lib/auth';
+import { getBadgeForAmount } from '@/config/site';
 
 export async function GET() {
   try {
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
       name: typeof name === 'string' ? name.slice(0, 50) : '',
       amount: parsedAmount,
       message: typeof message === 'string' ? message.slice(0, 200) : '',
-      badge: typeof badge === 'string' ? badge : '👑 Gigachad',
+      badge: typeof badge === 'string' && badge ? badge : getBadgeForAmount(parsedAmount),
       utrNumber: typeof utrNumber === 'string' ? utrNumber.trim() : undefined,
       screenshotUrl: typeof screenshotUrl === 'string' && screenshotUrl.startsWith('data:image') ? screenshotUrl : undefined,
     });

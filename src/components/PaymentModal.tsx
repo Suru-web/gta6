@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Send, Sparkles, ShieldCheck, Upload, Image as ImageIcon, AlertTriangle } from 'lucide-react';
-import { SITE_CONFIG } from '@/config/site';
+import { SITE_CONFIG, getBadgeForAmount } from '@/config/site';
 import { Donation } from '@/types/donation';
 import { sounds } from '@/lib/sounds';
 
@@ -22,14 +22,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [name, setName] = useState('');
   const [amount, setAmount] = useState<number>(initialAmount || 69);
   const [message, setMessage] = useState('');
-  const [selectedBadge, setSelectedBadge] = useState('👑 Gigachad');
   const [utrNumber, setUtrNumber] = useState('');
   const [screenshotUrl, setScreenshotUrl] = useState<string>('');
   const [screenshotName, setScreenshotName] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // Sync amount when initialAmount changes
+  useEffect(() => {
+    if (initialAmount) {
+      setAmount(initialAmount);
+    }
+  }, [initialAmount]);
+
   if (!isOpen) return null;
+
+  const autoBadge = getBadgeForAmount(amount);
 
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -98,7 +106,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           name: name.trim() || 'Anonymous Legend',
           amount: Math.max(1, Number(amount) || 1),
           message: message.trim() || 'Respect +1 for the GTA 6 fund! 🎮',
-          badge: selectedBadge,
+          badge: autoBadge,
           utrNumber: cleanUtr,
           screenshotUrl,
         }),
@@ -189,32 +197,21 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </div>
           </div>
 
-          {/* Badge Selector */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
-              Choose Honor Badge
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {SITE_CONFIG.badges.map((b) => {
-                const isSelected = selectedBadge === b.label;
-                return (
-                  <button
-                    type="button"
-                    key={b.id}
-                    onClick={() => {
-                      sounds.playClick();
-                      setSelectedBadge(b.label);
-                    }}
-                    className={`rounded-xl border p-2 text-xs font-medium transition-all text-left ${
-                      isSelected
-                        ? 'border-[#e86b97] bg-[#e86b97]/15 text-white'
-                        : 'border-white/10 bg-white/[0.02] text-slate-400 hover:border-white/20 hover:text-slate-200'
-                    }`}
-                  >
-                    <span>{b.label}</span>
-                  </button>
-                );
-              })}
+          {/* Auto-Assigned Honor Badge */}
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <Sparkles size={13} className="text-[#fca47a]" />
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                  Unlocked Honor Badge
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-400 block mt-0.5">
+                Auto-assigned based on your ₹{amount || 0} contribution
+              </span>
+            </div>
+            <div className="inline-flex items-center gap-1.5 rounded-xl border border-[#e86b97]/50 bg-[#e86b97]/20 px-3.5 py-1.5 text-xs font-black text-[#fca47a] shadow-md animate-in fade-in">
+              <span>{autoBadge}</span>
             </div>
           </div>
 
