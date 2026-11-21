@@ -2,6 +2,7 @@ export const SITE_CONFIG = {
   title: "HELP A BROTHER OUT TO PLAY GTA 6",
   subtitle: "Rockstar took 12 years. My bank balance is ₹0. Save a fellow gamer from 480p YouTube walkthroughs.",
   targetAmount: 69900, // ₹69,900 for PS5 Pro / Console + GTA 6 Steelbook Pre-order
+  deadline: "November 30, 2026",
   defaultUpiId: "suraj@upi", // Changeable via UI or environment
   defaultPayeeName: "GTA 6 Recovery Fund",
   defaultNote: "GTA6 Game Fund - Thank you legend",

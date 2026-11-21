@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { SiteStats } from '@/types/donation';
-import { Dices } from 'lucide-react';
+import { Dices, Calendar } from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 
 interface HeroSectionProps {
@@ -102,7 +102,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ stats, onScrollToDonat
 
         {/* CHUNKY RETRO PROGRESS BAR */}
         <div className="mx-auto mt-3 max-w-2xl rounded-2xl border-2 border-[#e86b97] bg-[#1c1233]/95 p-3 sm:p-4 brutal-shadow-rose text-left backdrop-blur-md">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-baseline gap-2">
               <span className="font-bebas text-2xl sm:text-3xl font-extrabold text-white tracking-wide">
                 ₹{stats.totalRaised.toLocaleString('en-IN')}
@@ -112,10 +112,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ stats, onScrollToDonat
               </span>
             </div>
 
-            <div className="rounded-xl border border-[#fca47a]/40 bg-[#251842] px-2.5 py-0.5 text-right">
-              <span className="font-bebas text-base sm:text-lg font-bold text-[#fca47a]">
-                {stats.totalDonors} Legends
-              </span>
+            <div className="flex items-center gap-2">
+              <div className="rounded-xl border border-[#e86b97]/50 bg-[#e86b97]/15 px-2.5 py-1 text-right flex items-center gap-1.5 shadow-sm">
+                <Calendar size={13} className="text-[#fca47a]" />
+                <span className="text-[11px] font-black uppercase text-[#fca47a] tracking-wide">
+                  Goal by Nov 30 ⏳
+                </span>
+              </div>
+
+              <div className="rounded-xl border border-[#fca47a]/40 bg-[#251842] px-2.5 py-1 text-right">
+                <span className="font-bebas text-base sm:text-lg font-bold text-[#fca47a]">
+                  {stats.totalDonors} Legends
+                </span>
+              </div>
             </div>
           </div>
 
