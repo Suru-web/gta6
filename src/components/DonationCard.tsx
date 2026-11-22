@@ -390,10 +390,11 @@ export const DonationCard: React.FC<DonationCardProps> = ({
               <div className="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                 {SITE_CONFIG.internationalSuggestedAmounts.map((item, idx) => {
                   const isSelected = selectedUsdAmount === item.amount;
+                  const soundIdx = soundMap[idx] ?? (idx % 5);
                   return (
                     <button
                       key={item.amount}
-                      onClick={() => handleSelectUsdAmount(item.amount, idx)}
+                      onClick={() => handleSelectUsdAmount(item.amount, soundIdx)}
                       className={`flex flex-col items-center justify-center rounded-2xl py-3 px-2 transition-all ${
                         isSelected
                           ? 'bg-[#ffdd00] text-[#090514] font-bold shadow-lg shadow-yellow-500/20 scale-[1.03]'
