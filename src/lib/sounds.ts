@@ -18,7 +18,19 @@ class SoundController {
     '/sounds/donate-4.mp3', // "FAAAAH" funny scream
   ];
 
+  // GTA / Vice City iconic audio assets
+  public readonly gtaSounds: Record<string, string> = {
+    cheat: '/sounds/gta-cheat.mp3',
+    missionPassed: '/sounds/vice-city-mission.mp3',
+    wasted: '/sounds/vice-city-death.mp3',
+    police: '/sounds/police-radio.mp3',
+    cash: '/sounds/cash-register.mp3',
+    tommy: '/sounds/tommy-vercetti.mp3',
+    bigSmoke: '/sounds/big-smoke.mp3',
+  };
+
   private audioCache: HTMLAudioElement[] = [];
+  private namedAudioCache: Map<string, HTMLAudioElement> = new Map();
   private diceAudio: HTMLAudioElement | null = null;
   private lastCycleIndex: number = -1;
 
@@ -30,8 +42,45 @@ class SoundController {
         audio.preload = 'auto';
         this.audioCache.push(audio);
       });
+
+      Object.entries(this.gtaSounds).forEach(([key, src]) => {
+        const audio = new Audio(src);
+        audio.preload = 'auto';
+        this.namedAudioCache.set(key, audio);
+      });
+
       this.diceAudio = new Audio('/sounds/dice-roll.mp3');
       this.diceAudio.preload = 'auto';
+    }
+  }
+
+  /**
+   * Play any custom sound by named key or URL path
+   */
+  public playSound(keyOrPath: string, volume: number = 0.9): Promise<void> | undefined {
+    if (!this.enabled || typeof window === 'undefined') return;
+
+    try {
+      const src = this.gtaSounds[keyOrPath] || keyOrPath;
+      let audio = this.namedAudioCache.get(keyOrPath) || this.namedAudioCache.get(src);
+      if (!audio) {
+        audio = new Audio(src);
+        audio.preload = 'auto';
+        this.namedAudioCache.set(src, audio);
+      }
+
+      audio.currentTime = 0;
+      audio.volume = volume;
+      this.currentAudio = audio;
+
+      const p = audio.play();
+      if (p !== undefined) {
+        return p.catch((err) => {
+          console.warn('Playback interrupted or prevented:', err);
+        });
+      }
+    } catch (e) {
+      console.warn('Error playing sound:', e);
     }
   }
 
@@ -210,10 +259,34 @@ class SoundController {
   }
 
   /**
-   * Cheat code entered sound (GTA San Andreas confirmation chime)
+   * Cheat code entered sound - Plays authentic GTA cheat activation chime
    */
   public playCheatCode() {
-    if (!this.enabled) return;
+    if (!this.enabled || typeof window === 'undefined') return;
+
+    try {
+      const audio = this.namedAudioCache.get('cheat');
+      if (audio) {
+        audio.currentTime = 0;
+        audio.volume = 0.95;
+        this.currentAudio = audio;
+        const p = audio.play();
+        if (p !== undefined) {
+          p.catch(() => this.synthesizeCheatCode());
+          return;
+        }
+      } else {
+        this.synthesizeCheatCode();
+      }
+    } catch {
+      this.synthesizeCheatCode();
+    }
+  }
+
+  /**
+   * Web Audio API synthesized fallback for cheat activation
+   */
+  private synthesizeCheatCode() {
     const ctx = this.getContext();
     if (!ctx) return;
 
@@ -238,6 +311,48 @@ class SoundController {
     } catch {
       // Ignore
     }
+  }
+
+  /**
+   * Play original Vice City Mission Passed fanfare
+   */
+  public playViceCityMission() {
+    this.playSound('missionPassed', 0.95);
+  }
+
+  /**
+   * Play original Vice City Wasted / Death sound
+   */
+  public playViceCityDeath() {
+    this.playSound('wasted', 0.95);
+  }
+
+  /**
+   * Play GTA Police Radio dispatch sound
+   */
+  public playPoliceRadio() {
+    this.playSound('police', 0.9);
+  }
+
+  /**
+   * Play cash register cha-ching sound
+   */
+  public playCashRegister() {
+    this.playSound('cash', 0.95);
+  }
+
+  /**
+   * Play Tommy Vercetti dialogue
+   */
+  public playTommyVercetti() {
+    this.playSound('tommy', 0.95);
+  }
+
+  /**
+   * Play Big Smoke meme line
+   */
+  public playBigSmoke() {
+    this.playSound('bigSmoke', 0.95);
   }
 
   /**

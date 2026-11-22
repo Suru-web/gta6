@@ -93,11 +93,136 @@ export const SITE_CONFIG = {
   ],
 
   cheatCodes: [
-    { code: "HESOYAM", effect: "Full health, armor, and ₹250k virtual flex!", sound: "hesoyam" },
-    { code: "BAGUVIX", effect: "Infinite invulnerability from peer pressure!", sound: "power" },
-    { code: "SEAWAYS", effect: "Cars drive on water, bro stays afloat!", sound: "splash" },
-    { code: "LEAVEMEALONE", effect: "Wanted level removed! Rockstar FBI leaves the chat.", sound: "stars" },
-    { code: "AEZAKMI", effect: "Never wanted. You can play GTA 6 in peace.", sound: "stars" }
+    {
+      code: "HESOYAM",
+      aliases: ["ASPIRINE"],
+      title: "HESOYAM // HEALTH + ARMOR + $250,000",
+      effect: "Full health, max armor, and +$250,000 virtual cash!",
+      meme: "+$250,000 credited to virtual balance! (Bank balance remains ₹0.00 💀)",
+      type: "hesoyam",
+      sound: "cash",
+      badge: "💰 +$250,000"
+    },
+    {
+      code: "ASPIRINE",
+      aliases: ["HESOYAM"],
+      title: "ASPIRINE // 100% HEALTH RESTORED",
+      effect: "Tommy's health refilled to 100%. No hangover.",
+      meme: "Health restored! Still suffering 480p YouTube playthrough trauma.",
+      type: "hesoyam",
+      sound: "cash",
+      badge: "❤️ HEALTH 100%"
+    },
+    {
+      code: "BAGUVIX",
+      aliases: ["PRECIOUSPROTECTION"],
+      title: "BAGUVIX // GOD MODE INVULNERABILITY",
+      effect: "Infinite invulnerability from peer pressure and financial dread!",
+      meme: "GIGACHAD ARMOR ACTIVATED: 100% immune to shame & broke comments.",
+      type: "armor",
+      sound: "cheat",
+      badge: "🛡️ GOD MODE"
+    },
+    {
+      code: "PRECIOUSPROTECTION",
+      aliases: ["BAGUVIX"],
+      title: "PRECIOUSPROTECTION // MAX BODY ARMOR",
+      effect: "100% Kevlar body armor equipped. Bulletproof ego.",
+      meme: "Armor maxed out! Sadly does not protect against UPI payment requests.",
+      type: "armor",
+      sound: "cheat",
+      badge: "🛡️ ARMOR 100%"
+    },
+    {
+      code: "SEAWAYS",
+      aliases: [],
+      title: "SEAWAYS // AMPHIBIOUS DRIVING",
+      effect: "Cars drive on water, bro stays afloat amidst inflation!",
+      meme: "🚗🌊 Bro is literally driving across Biscayne Bay waiting for GTA 6.",
+      type: "seaways",
+      sound: "splash",
+      badge: "🌊 CARS ON WATER"
+    },
+    {
+      code: "LEAVEMEALONE",
+      aliases: ["AEZAKMI"],
+      title: "LEAVEMEALONE // 0 WANTED STARS",
+      effect: "Rockstar FBI and tax collectors have left the chat!",
+      meme: "★ WANTED LEVEL CLEARED ★ Radio: 'All units stand down, suspect is just broke.'",
+      type: "stars",
+      sound: "police",
+      badge: "⭐ 0 WANTED STARS"
+    },
+    {
+      code: "AEZAKMI",
+      aliases: ["LEAVEMEALONE"],
+      title: "AEZAKMI // NEVER WANTED FOREVER",
+      effect: "You can roam Vice City freely with zero police disturbance.",
+      meme: "Rockstar police pretend they never saw you begging for ₹1.",
+      type: "stars",
+      sound: "police",
+      badge: "⭐ NEVER WANTED"
+    },
+    {
+      code: "PANZER",
+      aliases: [],
+      title: "PANZER // RHINO TANK SPAWNED",
+      effect: "A 60-ton Rhino Tank drops right onto Ocean Drive!",
+      meme: "💥 BOOM! Rhino Tank spawned in your living room. Still no PS5 though.",
+      type: "panzer",
+      sound: "boom",
+      badge: "🚜 RHINO TANK"
+    },
+    {
+      code: "NUTTERTOOLS",
+      aliases: ["PROFESSIONALTOOLS", "THUGSTOOLS"],
+      title: "NUTTERTOOLS // HEAVY WEAPONS ARSENAL",
+      effect: "Minigun, Rocket Launcher, Grenades & Katana unlocked!",
+      meme: "🔫 Fully loaded with military-grade weapons just to beg for ₹1 online.",
+      type: "weapons",
+      sound: "cheat",
+      badge: "💣 HEAVY ARSENAL"
+    },
+    {
+      code: "WASTED",
+      aliases: ["GOODBYECRUELWORLD"],
+      title: "WASTED // MISSION FAILED",
+      effect: "You succumbed to the 12-year wait for GTA VI.",
+      meme: "💀 WASTED. Respawned outside Vice City Hospital with ₹100 deducted.",
+      type: "wasted",
+      sound: "wasted",
+      badge: "💀 WASTED"
+    },
+    {
+      code: "MISSIONPASSED",
+      aliases: ["RESPECT"],
+      title: "MISSION PASSED! // RESPECT +999999",
+      effect: "You officially beat the internet! Authentic Vice City fanfare blasting!",
+      meme: "🏆 RESPECT +999999! Tommy Vercetti and Carl Johnson salute you.",
+      type: "mission",
+      sound: "mission",
+      badge: "🏆 RESPECT +999999"
+    },
+    {
+      code: "BIGSMOKE",
+      aliases: [],
+      title: "BIG SMOKE // CLUCKIN' BELL DRIVE-THRU",
+      effect: "Two number 9s, a number 9 large, a number 6 with extra dip...",
+      meme: "🍔 Big Smoke: 'OHHH MY GOD! You gotta eat to keep your strength up!'",
+      type: "bigsmoke",
+      sound: "bigsmoke",
+      badge: "🍔 2 NUMBER 9s"
+    },
+    {
+      code: "VERCETTI",
+      aliases: ["TOMMY"],
+      title: "TOMMY VERCETTI // VICE CITY LEGEND",
+      effect: "Hawaiian shirt equipped. Pure 1980s Miami Kingpin energy.",
+      meme: "🌴 'I poke my head out of the gutter for one freakin' second, and fate shovels shit in my face!'",
+      type: "tommy",
+      sound: "tommy",
+      badge: "🌴 TOMMY VERCETTI"
+    }
   ],
 
   milestones: [
