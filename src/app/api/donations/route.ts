@@ -40,9 +40,10 @@ export async function POST(request: NextRequest) {
 
     const parsedAmount = Math.max(1, Math.min(100000, Number(amount) || 1));
 
-    if (utrNumber && !/^\d{12}$/.test(String(utrNumber).trim())) {
+    const cleanRef = utrNumber ? String(utrNumber).trim() : '';
+    if (cleanRef && !/^\d{12}$/.test(cleanRef) && !/^[A-Za-z0-9\-_#]{3,35}$/.test(cleanRef)) {
       return NextResponse.json(
-        { success: false, error: 'UPI Transaction Reference (UTR) must be exactly 12 digits.' },
+        { success: false, error: 'Transaction Reference must be a 12-digit UPI UTR or valid payment reference ID.' },
         { status: 400 }
       );
     }

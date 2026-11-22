@@ -25,4 +25,5 @@ export interface UpiConfig {
   payeeName: string;
   note: string;
   customQrUrl?: string;
+  buyMeACoffeeUrl?: string;
 }

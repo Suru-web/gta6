@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { SiteStats } from '@/types/donation';
-import { Dices, Calendar, Sparkles, Eye, ArrowDown } from 'lucide-react';
+import { SITE_CONFIG } from '@/config/site';
+import { Dices, Calendar, Sparkles, Eye, ArrowDown, Coffee, ExternalLink } from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 
 interface HeroSectionProps {
@@ -164,18 +165,30 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ stats, totalVisits, on
           </div>
         </div>
 
-        {/* High-Converting Direct CTA Button */}
+        {/* High-Converting Direct CTA Buttons: India & Worldwide */}
         <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
           <button
             onClick={() => {
               sounds.playClick();
               onScrollToDonate();
             }}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#e86b97] via-[#fca47a] to-[#c084fc] px-8 py-3.5 font-sans text-xs sm:text-sm font-extrabold uppercase tracking-wider text-black shadow-lg shadow-pink-500/25 hover:scale-[1.03] active:scale-95 transition-all"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#e86b97] via-[#fca47a] to-[#c084fc] px-7 py-3.5 font-sans text-xs sm:text-sm font-extrabold uppercase tracking-wider text-black shadow-lg shadow-pink-500/25 hover:scale-[1.03] active:scale-95 transition-all"
           >
-            <span>⚡ Drop ₹1 &amp; Join the Heist</span>
+            <span>⚡ Drop ₹1 &amp; Join Heist (UPI)</span>
             <ArrowDown size={16} />
           </button>
+
+          <a
+            href={SITE_CONFIG.buyMeACoffeeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => sounds.playCoin()}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl border border-[#ffdd00]/50 bg-[#ffdd00]/15 hover:bg-[#ffdd00]/25 px-6 py-3.5 font-sans text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#ffdd00] shadow-lg shadow-yellow-500/10 hover:scale-[1.03] active:scale-95 transition-all"
+          >
+            <Coffee size={16} />
+            <span>🌍 Worldwide / Cards ($1)</span>
+            <ExternalLink size={14} />
+          </a>
         </div>
       </div>
     </section>

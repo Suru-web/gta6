@@ -54,7 +54,14 @@ export const Footer: React.FC<FooterProps> = ({ onScrollToTop }) => {
         <div className="mt-5 flex flex-col sm:flex-row items-center justify-between border-t border-white/5 pt-5 text-[11px] text-slate-500 gap-2">
           <span>Official Vice City Sunset Theme • Lucia & Jason Approved 🌴</span>
           <div className="flex items-center gap-3">
-            <span>Deployable on Vercel</span>
+            <a
+              href="https://buymeacoffee.com/anonymous9909"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#ffdd00] hover:underline transition-colors"
+            >
+              ☕ Buy Me a Coffee
+            </a>
             <span>•</span>
             <a href="/admin" className="text-slate-500 hover:text-[#fca47a] transition-colors">
               Admin Portal

@@ -55,12 +55,55 @@ class SoundController {
   }
 
   /**
-   * Play any custom sound by named key or URL path
+   * Immediately stops all currently playing or queued audio across all caches
+   */
+  public stopAll() {
+    if (typeof window === 'undefined') return;
+
+    try {
+      if (this.currentAudio) {
+        this.currentAudio.pause();
+        this.currentAudio.currentTime = 0;
+        this.currentAudio = null;
+      }
+
+      this.namedAudioCache.forEach((audio) => {
+        try {
+          audio.pause();
+          audio.currentTime = 0;
+        } catch {
+          // ignore
+        }
+      });
+
+      this.audioCache.forEach((audio) => {
+        try {
+          audio.pause();
+          audio.currentTime = 0;
+        } catch {
+          // ignore
+        }
+      });
+
+      if (this.diceAudio) {
+        this.diceAudio.pause();
+        this.diceAudio.currentTime = 0;
+      }
+    } catch (e) {
+      console.warn('Error stopping audio:', e);
+    }
+  }
+
+  /**
+   * Play any custom sound by named key or URL path (stops all previous sounds)
    */
   public playSound(keyOrPath: string, volume: number = 0.9): Promise<void> | undefined {
     if (!this.enabled || typeof window === 'undefined') return;
 
     try {
+      // Cut off any currently playing audio immediately so sounds never overlap
+      this.stopAll();
+
       const src = this.gtaSounds[keyOrPath] || keyOrPath;
       let audio = this.namedAudioCache.get(keyOrPath) || this.namedAudioCache.get(src);
       if (!audio) {
@@ -259,10 +302,13 @@ class SoundController {
   }
 
   /**
-   * Cheat code entered sound - Plays authentic GTA cheat activation chime
+   * Cheat code entered sound - Plays authentic GTA cheat activation chime (stops previous audio)
    */
   public playCheatCode() {
     if (!this.enabled || typeof window === 'undefined') return;
+
+    // Cut off all previous sounds first
+    this.stopAll();
 
     try {
       const audio = this.namedAudioCache.get('cheat');

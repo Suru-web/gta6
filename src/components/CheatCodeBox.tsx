@@ -30,6 +30,7 @@ export const CheatCodeBox: React.FC = () => {
     '> Enter any classic GTA cheat or click a chip below.'
   ]);
   const overlayTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const secondaryTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const quickCheats = [
     { code: 'HESOYAM', label: '💰 HESOYAM ($250k)' },
@@ -48,6 +49,13 @@ export const CheatCodeBox: React.FC = () => {
     const clean = cheatCodeStr.trim().toUpperCase();
     if (!clean) return;
 
+    // 0. Immediately cut off any previously playing sounds and clear pending timers
+    if (secondaryTimerRef.current) {
+      clearTimeout(secondaryTimerRef.current);
+      secondaryTimerRef.current = null;
+    }
+    sounds.stopAll();
+
     // Match by code or alias
     const found = SITE_CONFIG.cheatCodes.find(
       (c) => c.code === clean || (c.aliases && c.aliases.includes(clean))
@@ -57,9 +65,9 @@ export const CheatCodeBox: React.FC = () => {
       // 1. Play authentic GTA cheat sound
       sounds.playCheatCode();
 
-      // 2. Play secondary authentic sound based on cheat type
+      // 2. Play secondary authentic sound based on cheat type (single isolated timer)
       if (found.type === 'hesoyam') {
-        setTimeout(() => sounds.playCashRegister(), 220);
+        secondaryTimerRef.current = setTimeout(() => sounds.playCashRegister(), 220);
         confetti({
           particleCount: 120,
           spread: 80,
@@ -67,7 +75,7 @@ export const CheatCodeBox: React.FC = () => {
           colors: ['#10b981', '#34d399', '#fca47a', '#fbbf24']
         });
       } else if (found.type === 'stars') {
-        setTimeout(() => sounds.playPoliceRadio(), 200);
+        secondaryTimerRef.current = setTimeout(() => sounds.playPoliceRadio(), 200);
       } else if (found.type === 'wasted') {
         sounds.playViceCityDeath();
       } else if (found.type === 'mission') {
@@ -79,9 +87,9 @@ export const CheatCodeBox: React.FC = () => {
           colors: ['#fbbf24', '#f59e0b', '#e86b97', '#c084fc']
         });
       } else if (found.type === 'tommy') {
-        setTimeout(() => sounds.playTommyVercetti(), 200);
+        secondaryTimerRef.current = setTimeout(() => sounds.playTommyVercetti(), 200);
       } else if (found.type === 'bigsmoke') {
-        setTimeout(() => sounds.playBigSmoke(), 200);
+        secondaryTimerRef.current = setTimeout(() => sounds.playBigSmoke(), 200);
       } else {
         confetti({
           particleCount: 60,
@@ -125,8 +133,19 @@ export const CheatCodeBox: React.FC = () => {
 
   const handleDismiss = () => {
     if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+    if (secondaryTimerRef.current) clearTimeout(secondaryTimerRef.current);
+    sounds.stopAll();
     setActiveCheat(null);
   };
+
+  // Cleanup timers & audio on unmount
+  useEffect(() => {
+    return () => {
+      if (overlayTimerRef.current) clearTimeout(overlayTimerRef.current);
+      if (secondaryTimerRef.current) clearTimeout(secondaryTimerRef.current);
+      sounds.stopAll();
+    };
+  }, []);
 
   const scrollToDonate = () => {
     handleDismiss();

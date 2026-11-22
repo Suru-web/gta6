@@ -6,6 +6,8 @@ export const SITE_CONFIG = {
   defaultUpiId: "suraj-jupiter@ybl",
   defaultPayeeName: "GTA 6 PS5 Game",
   defaultNote: "GTA 6 PS5 Game",
+  buyMeACoffeeUrl: "https://buymeacoffee.com/anonymous9909",
+  buyMeACoffeeUsername: "anonymous9909",
   
   suggestedAmounts: [
     {
@@ -47,6 +49,44 @@ export const SITE_CONFIG = {
       amount: 100,
       tag: "GIGACHAD WHALE",
       meme: "Bro dropped an entire arsenal 👑",
+      icon: "👑",
+      perk: "Godfather of Leonida status forever"
+    }
+  ],
+
+  internationalSuggestedAmounts: [
+    {
+      amount: 1,
+      tag: "1 COFFEE",
+      meme: "It ain't much, but it's honest international work ☕",
+      icon: "☕",
+      perk: "1 Digital Coffee & eternal global gamer solidarity"
+    },
+    {
+      amount: 3,
+      tag: "SAMOSA PATRON",
+      meme: "Samosa & Chai fuel for the 100-hour campaign 🥟",
+      icon: "🥟",
+      perk: "High priority shoutout on Wall of Legends"
+    },
+    {
+      amount: 5,
+      tag: "GROVE STREET",
+      meme: "Grove Street approved international homie 🤝",
+      icon: "🤝",
+      perk: "Certified Vice City VIP pass"
+    },
+    {
+      amount: 10,
+      tag: "VICE CITY VIP",
+      meme: "Pure Kingpin energy across the ocean 🌴",
+      icon: "🌴",
+      perk: "Special Golden Vice City badge"
+    },
+    {
+      amount: 25,
+      tag: "GIGACHAD WHALE",
+      meme: "Bro funded a whole DualSense controller 👑",
       icon: "👑",
       perk: "Godfather of Leonida status forever"
     }

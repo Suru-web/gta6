@@ -4,7 +4,10 @@ import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { SITE_CONFIG } from '@/config/site';
 import { UpiConfig } from '@/types/donation';
-import { Copy, Check, Smartphone, CheckCircle, ArrowRight } from 'lucide-react';
+import { 
+  Copy, Check, Smartphone, CheckCircle, ArrowRight, 
+  Globe, Coffee, ExternalLink, CreditCard, ShieldCheck, Zap
+} from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 
 interface DonationCardProps {
@@ -16,7 +19,9 @@ export const DonationCard: React.FC<DonationCardProps> = ({
   upiConfig,
   onOpenPaymentModal,
 }) => {
+  const [region, setRegion] = useState<'india' | 'worldwide'>('india');
   const [selectedAmount, setSelectedAmount] = useState<number>(1);
+  const [selectedUsdAmount, setSelectedUsdAmount] = useState<number>(1);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [isCustom, setIsCustom] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
@@ -33,6 +38,8 @@ export const DonationCard: React.FC<DonationCardProps> = ({
   const upiUrl = `upi://pay?pa=${encodeURIComponent(upiConfig.upiId)}&pn=${encodeURIComponent(
     upiConfig.payeeName
   )}&am=${activeAmount}&cu=INR&tn=${encodeURIComponent(`GTA6 Fund - ₹${activeAmount}`)}`;
+
+  const bmcUrl = upiConfig.buyMeACoffeeUrl || SITE_CONFIG.buyMeACoffeeUrl;
 
   const handleCopyUpi = () => {
     sounds.playClick();
@@ -51,6 +58,11 @@ export const DonationCard: React.FC<DonationCardProps> = ({
     setSelectedAmount(amt);
   };
 
+  const handleSelectUsdAmount = (amt: number, soundIdx?: number) => {
+    sounds.playDonateSound(soundIdx);
+    setSelectedUsdAmount(amt);
+  };
+
   const handleCustomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsCustom(true);
     const val = e.target.value.replace(/[^0-9]/g, '');
@@ -67,206 +79,368 @@ export const DonationCard: React.FC<DonationCardProps> = ({
   };
 
   const currentOption = SITE_CONFIG.suggestedAmounts.find((a) => a.amount === activeAmount);
+  const currentUsdOption = SITE_CONFIG.internationalSuggestedAmounts.find(
+    (a) => a.amount === selectedUsdAmount
+  );
 
   return (
     <section id="donate-section" className="relative px-4 py-8 sm:py-10">
       <div className="mx-auto max-w-3xl">
         <div className="rounded-3xl border border-white/[0.08] bg-[#120b22]/90 p-6 sm:p-8 backdrop-blur-2xl shadow-2xl">
-          {/* Header */}
-          <div className="text-center">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-[#fca47a] block">
-              Direct Contribution // UPI Supported
-            </span>
-            <h2 className="mt-1 font-bebas text-3xl sm:text-4xl uppercase tracking-wider text-[#fdfbf7]">
-              SELECT YOUR CONTRIBUTION
-            </h2>
-            <p className="mt-1 text-xs text-[#a19bb5]">
-              Every single rupee directly funds the console hardware & steelbook pre-order.
-            </p>
+          
+          {/* REGION / PAYMENT METHOD SWITCHER TABS */}
+          <div className="mb-6 flex justify-center">
+            <div className="inline-flex rounded-2xl border border-white/[0.1] bg-black/60 p-1 backdrop-blur-md">
+              <button
+                type="button"
+                onClick={() => {
+                  sounds.playClick();
+                  setRegion('india');
+                }}
+                className={`flex items-center gap-2 rounded-xl px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all ${
+                  region === 'india'
+                    ? 'bg-gradient-to-r from-[#fca47a] to-[#e86b97] text-[#090514] shadow-md'
+                    : 'text-[#a19bb5] hover:text-white'
+                }`}
+              >
+                <span>🇮🇳 India (₹ UPI)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  sounds.playClick();
+                  setRegion('worldwide');
+                }}
+                className={`flex items-center gap-2 rounded-xl px-4 sm:px-6 py-2.5 text-xs sm:text-sm font-bold uppercase tracking-wider transition-all ${
+                  region === 'worldwide'
+                    ? 'bg-[#ffdd00] text-[#090514] shadow-md'
+                    : 'text-[#a19bb5] hover:text-[#ffdd00]'
+                }`}
+              >
+                <Globe size={15} />
+                <span>🌍 Worldwide ($ / Cards / Apple Pay)</span>
+              </button>
+            </div>
           </div>
 
-          {/* Preset Contribution Chips */}
-          <div className="mt-6 grid grid-cols-3 sm:grid-cols-6 gap-2.5">
-            {SITE_CONFIG.suggestedAmounts.map((item, idx) => {
-              const isSelected = !isCustom && selectedAmount === item.amount;
-              const soundIdx = soundMap[idx] ?? (idx % 5);
-              return (
-                <button
-                  key={item.amount}
-                  onClick={() => handleSelectAmount(item.amount, soundIdx)}
-                  className={`flex flex-col items-center justify-center rounded-2xl py-3 px-2 transition-all ${
-                    isSelected
-                      ? 'bg-[#fca47a] text-[#090514] font-bold shadow-md scale-[1.03]'
-                      : 'border border-white/[0.08] bg-white/[0.03] text-[#fdfbf7] hover:border-white/20 hover:bg-white/[0.06]'
-                  }`}
-                >
-                  <span className="text-xl mb-0.5">{item.icon}</span>
-                  <span className="font-bebas text-2xl font-bold tracking-wide leading-none">
-                    ₹{item.amount}
-                  </span>
-                  <span
-                    className={`text-[9px] uppercase font-bold tracking-wider truncate max-w-full mt-1 ${
-                      isSelected ? 'text-[#090514]' : 'text-[#a19bb5]'
-                    }`}
-                  >
-                    {item.tag}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Custom Helper Amount Field */}
-          <div className="mt-4 rounded-xl border border-white/[0.06] bg-black/40 p-3 text-xs">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium text-[#fdfbf7]">Custom amount:</span>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#fca47a]">
-                    ₹
-                  </span>
-                  <input
-                    type="number"
-                    min="100"
-                    max="100000"
-                    value={customAmount}
-                    onChange={handleCustomChange}
-                    onBlur={handleCustomBlur}
-                    placeholder="Min ₹100"
-                    className={`w-32 rounded-lg border bg-black/60 pl-6 pr-2 py-1 text-xs font-semibold text-[#fdfbf7] placeholder-[#6c637e] focus:outline-none transition-colors ${
-                      isCustomBelowMin
-                        ? 'border-rose-500/80 focus:border-rose-500'
-                        : 'border-white/20 focus:border-[#fca47a]'
-                    }`}
-                  />
-                </div>
-                <span className="text-[11px] text-[#a19bb5]">
-                  (Min ₹100 for custom donations)
+          {/* ========================================================= */}
+          {/* TAB 1: INDIA (UPI)                                         */}
+          {/* ========================================================= */}
+          {region === 'india' && (
+            <div className="animate-in fade-in duration-300">
+              {/* Header */}
+              <div className="text-center">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-[#fca47a] block">
+                  Direct Contribution // UPI Supported
                 </span>
+                <h2 className="mt-1 font-bebas text-3xl sm:text-4xl uppercase tracking-wider text-[#fdfbf7]">
+                  SELECT YOUR CONTRIBUTION
+                </h2>
+                <p className="mt-1 text-xs text-[#a19bb5]">
+                  Every single rupee directly funds the console hardware & steelbook pre-order.
+                </p>
               </div>
 
-              <div className="text-left sm:text-right font-medium text-xs text-[#fca47a] italic">
-                {isCustom ? (
-                  isCustomBelowMin ? (
-                    <span className="text-rose-400 font-semibold not-italic">
-                      ⚠️ Min custom is ₹100 (pick chips above for ₹1–₹100)
+              {/* Preset Contribution Chips */}
+              <div className="mt-6 grid grid-cols-3 sm:grid-cols-6 gap-2.5">
+                {SITE_CONFIG.suggestedAmounts.map((item, idx) => {
+                  const isSelected = !isCustom && selectedAmount === item.amount;
+                  const soundIdx = soundMap[idx] ?? (idx % 5);
+                  return (
+                    <button
+                      key={item.amount}
+                      onClick={() => handleSelectAmount(item.amount, soundIdx)}
+                      className={`flex flex-col items-center justify-center rounded-2xl py-3 px-2 transition-all ${
+                        isSelected
+                          ? 'bg-[#fca47a] text-[#090514] font-bold shadow-md scale-[1.03]'
+                          : 'border border-white/[0.08] bg-white/[0.03] text-[#fdfbf7] hover:border-white/20 hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      <span className="text-xl mb-0.5">{item.icon}</span>
+                      <span className="font-bebas text-2xl font-bold tracking-wide leading-none">
+                        ₹{item.amount}
+                      </span>
+                      <span
+                        className={`text-[9px] uppercase font-bold tracking-wider truncate max-w-full mt-1 ${
+                          isSelected ? 'text-[#090514]' : 'text-[#a19bb5]'
+                        }`}
+                      >
+                        {item.tag}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Custom Helper Amount Field */}
+              <div className="mt-4 rounded-xl border border-white/[0.06] bg-black/40 p-3 text-xs">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-[#fdfbf7]">Custom amount:</span>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-[#fca47a]">
+                        ₹
+                      </span>
+                      <input
+                        type="number"
+                        min="100"
+                        max="100000"
+                        value={customAmount}
+                        onChange={handleCustomChange}
+                        onBlur={handleCustomBlur}
+                        placeholder="Min ₹100"
+                        className={`w-32 rounded-lg border bg-black/60 pl-6 pr-2 py-1 text-xs font-semibold text-[#fdfbf7] placeholder-[#6c637e] focus:outline-none transition-colors ${
+                          isCustomBelowMin
+                            ? 'border-rose-500/80 focus:border-rose-500'
+                            : 'border-white/20 focus:border-[#fca47a]'
+                        }`}
+                      />
+                    </div>
+                    <span className="text-[11px] text-[#a19bb5]">
+                      (Min ₹100 for custom donations)
                     </span>
-                  ) : activeAmount >= 10000 ? (
-                    <span>🚀 Heist of the century: Console secured in one hit!</span>
-                  ) : activeAmount >= 1000 ? (
-                    <span>👑 Vice City Godfather tier contribution!</span>
-                  ) : activeAmount > 100 ? (
-                    <span>🐳 Ultra Whale status unlocked!</span>
-                  ) : (
-                    <span>Custom contribution: ₹100</span>
-                  )
-                ) : (
-                  currentOption && <span>{currentOption.meme}</span>
-                )}
-              </div>
-            </div>
+                  </div>
 
-            {isCustomBelowMin && (
-              <div className="mt-2 text-[11px] text-rose-300/90 font-medium border-t border-rose-500/20 pt-2 flex items-center justify-between">
-                <span>Amounts below ₹100 are already available in the quick pickers above.</span>
-                <button
-                  type="button"
-                  onClick={() => setCustomAmount('100')}
-                  className="underline text-[#fca47a] hover:text-white ml-2 text-[10px] font-bold uppercase tracking-wider"
-                >
-                  Set to ₹100
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* The QR Code & Payment Details */}
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-6 rounded-2xl border border-white/[0.06] bg-[#0c0718] p-5 sm:p-6">
-            {/* Scannable QR Code */}
-            <div className="flex flex-col items-center shrink-0">
-              <div className="rounded-2xl bg-white p-3 shadow-xl">
-                {upiConfig.customQrUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={upiConfig.customQrUrl}
-                    alt="Custom UPI QR"
-                    className="h-40 w-40 object-contain"
-                  />
-                ) : (
-                  <QRCodeSVG
-                    value={upiUrl}
-                    size={160}
-                    level="H"
-                    includeMargin={false}
-                  />
-                )}
-              </div>
-              <span className="mt-2 text-[11px] font-semibold text-[#a19bb5]">
-                Scan to pay <strong className="text-[#fdfbf7]">₹{activeAmount}</strong>
-              </span>
-            </div>
-
-            {/* Details & Actions */}
-            <div className="flex-1 space-y-3.5 text-center sm:text-left w-full">
-              {/* UPI ID */}
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#a19bb5] block">
-                  UPI ID (Click to Copy)
-                </span>
-                <div className="mt-1 flex items-center justify-center sm:justify-start gap-2">
-                  <code className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-1.5 font-mono text-sm font-semibold text-[#fca47a]">
-                    {upiConfig.upiId}
-                  </code>
-                  <button
-                    onClick={handleCopyUpi}
-                    className="inline-flex items-center gap-1 rounded-xl border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-[#fdfbf7] hover:border-white/30 transition-all active:scale-95"
-                  >
-                    {copied ? (
-                      <>
-                        <Check size={13} className="text-emerald-400" />
-                        <span className="text-emerald-400">Copied</span>
-                      </>
+                  <div className="text-left sm:text-right font-medium text-xs text-[#fca47a] italic">
+                    {isCustom ? (
+                      isCustomBelowMin ? (
+                        <span className="text-rose-400 font-semibold not-italic">
+                          ⚠️ Min custom is ₹100 (pick chips above for ₹1–₹100)
+                        </span>
+                      ) : activeAmount >= 10000 ? (
+                        <span>🚀 Heist of the century: Console secured in one hit!</span>
+                      ) : activeAmount >= 1000 ? (
+                        <span>👑 Vice City Godfather tier contribution!</span>
+                      ) : activeAmount > 100 ? (
+                        <span>🐳 Ultra Whale status unlocked!</span>
+                      ) : (
+                        <span>Custom contribution: ₹100</span>
+                      )
                     ) : (
-                      <>
-                        <Copy size={13} />
-                        <span>Copy</span>
-                      </>
+                      currentOption && <span>{currentOption.meme}</span>
                     )}
+                  </div>
+                </div>
+
+                {isCustomBelowMin && (
+                  <div className="mt-2 text-[11px] text-rose-300/90 font-medium border-t border-rose-500/20 pt-2 flex items-center justify-between">
+                    <span>Amounts below ₹100 are already available in the quick pickers above.</span>
+                    <button
+                      type="button"
+                      onClick={() => setCustomAmount('100')}
+                      className="underline text-[#fca47a] hover:text-white ml-2 text-[10px] font-bold uppercase tracking-wider"
+                    >
+                      Set to ₹100
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* The QR Code & Payment Details */}
+              <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-6 rounded-2xl border border-white/[0.06] bg-[#0c0718] p-5 sm:p-6">
+                {/* Scannable QR Code */}
+                <div className="flex flex-col items-center shrink-0">
+                  <div className="rounded-2xl bg-white p-3 shadow-xl">
+                    {upiConfig.customQrUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={upiConfig.customQrUrl}
+                        alt="Custom UPI QR"
+                        className="h-40 w-40 object-contain"
+                      />
+                    ) : (
+                      <QRCodeSVG
+                        value={upiUrl}
+                        size={160}
+                        level="H"
+                        includeMargin={false}
+                      />
+                    )}
+                  </div>
+                  <span className="mt-2 text-[11px] font-semibold text-[#a19bb5]">
+                    Scan to pay <strong className="text-[#fdfbf7]">₹{activeAmount}</strong>
+                  </span>
+                </div>
+
+                {/* Details & Actions */}
+                <div className="flex-1 space-y-3.5 text-center sm:text-left w-full">
+                  {/* UPI ID */}
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#a19bb5] block">
+                      UPI ID (Click to Copy)
+                    </span>
+                    <div className="mt-1 flex items-center justify-center sm:justify-start gap-2">
+                      <code className="rounded-xl border border-white/[0.08] bg-white/[0.03] px-3.5 py-1.5 font-mono text-sm font-semibold text-[#fca47a]">
+                        {upiConfig.upiId}
+                      </code>
+                      <button
+                        onClick={handleCopyUpi}
+                        className="inline-flex items-center gap-1 rounded-xl border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-[#fdfbf7] hover:border-white/30 transition-all active:scale-95"
+                      >
+                        {copied ? (
+                          <>
+                            <Check size={13} className="text-emerald-400" />
+                            <span className="text-emerald-400">Copied</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={13} />
+                            <span>Copy</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <div className="mt-1 text-[11px] text-[#a19bb5]">
+                      Payee: <strong className="text-[#fdfbf7]">{upiConfig.payeeName}</strong>
+                    </div>
+                  </div>
+
+                  {/* Direct UPI Mobile Link */}
+                  <div>
+                    <a
+                      href={upiUrl}
+                      onClick={() => sounds.playCoin()}
+                      className="w-full inline-flex items-center justify-center gap-2 rounded-2xl border border-white/[0.1] bg-[#fca47a] px-4 py-3 font-sans text-xs sm:text-sm font-bold text-[#090514] transition-all hover:bg-[#ffb78e] active:scale-95 shadow-md"
+                    >
+                      <Smartphone size={15} />
+                      <span>Open UPI App (Pay ₹{activeAmount})</span>
+                    </a>
+                  </div>
+
+                  {/* Post-Payment Claim Clout */}
+                  <div className="pt-2 border-t border-white/[0.06]">
+                    <button
+                      onClick={() => {
+                        sounds.playMissionPassed();
+                        onOpenPaymentModal(activeAmount);
+                      }}
+                      className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#e86b97] to-[#c084fc] px-4 py-3 font-sans text-xs sm:text-sm font-bold tracking-wide text-white transition-all hover:opacity-95 active:scale-95 shadow-md"
+                    >
+                      <CheckCircle size={15} />
+                      <span>I Paid! Put Me on the Wall of Legends</span>
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* TAB 2: WORLDWIDE (CARDS / APPLE PAY / PAYPAL / BMC)       */}
+          {/* ========================================================= */}
+          {region === 'worldwide' && (
+            <div className="animate-in fade-in duration-300">
+              {/* Header */}
+              <div className="text-center">
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[#ffdd00]/30 bg-[#ffdd00]/10 px-3 py-1 text-xs font-bold text-[#ffdd00] mb-1.5">
+                  <Globe size={13} />
+                  <span>150+ COUNTRIES SUPPORTED // ZERO UPI NEEDED</span>
+                </div>
+                <h2 className="mt-1 font-bebas text-3xl sm:text-4xl uppercase tracking-wider text-[#fdfbf7]">
+                  WORLDWIDE GAMER SUPPORT
+                </h2>
+                <p className="mt-1 text-xs text-[#a19bb5] max-w-lg mx-auto">
+                  For visitors in <strong className="text-white">Singapore (33%)</strong>, <strong className="text-white">USA (27%)</strong>, <strong className="text-white">UK</strong>, <strong className="text-white">Poland</strong>, &amp; worldwide. Pay instantly using Apple Pay, Google Pay, Cards, or PayPal!
+                </p>
+              </div>
+
+              {/* Preset USD Contribution Chips */}
+              <div className="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                {SITE_CONFIG.internationalSuggestedAmounts.map((item, idx) => {
+                  const isSelected = selectedUsdAmount === item.amount;
+                  return (
+                    <button
+                      key={item.amount}
+                      onClick={() => handleSelectUsdAmount(item.amount, idx)}
+                      className={`flex flex-col items-center justify-center rounded-2xl py-3 px-2 transition-all ${
+                        isSelected
+                          ? 'bg-[#ffdd00] text-[#090514] font-bold shadow-lg shadow-yellow-500/20 scale-[1.03]'
+                          : 'border border-white/[0.08] bg-white/[0.03] text-[#fdfbf7] hover:border-yellow-400/40 hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      <span className="text-xl mb-0.5">{item.icon}</span>
+                      <span className="font-bebas text-2xl font-bold tracking-wide leading-none">
+                        ${item.amount}
+                      </span>
+                      <span
+                        className={`text-[9px] uppercase font-bold tracking-wider truncate max-w-full mt-1 ${
+                          isSelected ? 'text-[#090514]' : 'text-[#a19bb5]'
+                        }`}
+                      >
+                        {item.tag}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Tier Perk Preview */}
+              <div className="mt-3 text-center text-xs text-[#ffdd00] italic font-medium">
+                {currentUsdOption?.meme}
+              </div>
+
+              {/* Buy Me a Coffee Action Box */}
+              <div className="mt-6 rounded-2xl border-2 border-[#ffdd00]/40 bg-gradient-to-b from-[#241d06] to-[#120b22] p-5 sm:p-7 shadow-2xl text-center">
+                <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#ffdd00]/20 text-[#ffdd00] border border-[#ffdd00]/40 mb-3 shadow-lg">
+                  <Coffee size={30} className="animate-bounce" />
+                </div>
+
+                <h3 className="font-bebas text-2xl sm:text-3xl uppercase tracking-wider text-[#ffdd00]">
+                  Buy Me a Coffee // Verified International Checkout
+                </h3>
+
+                <p className="mt-1 text-xs text-[#d1c8e0] max-w-md mx-auto">
+                  Click the button below to complete your <strong className="text-white">${selectedUsdAmount} contribution</strong> on our official page.
+                </p>
+
+                {/* Supported Payment Badges */}
+                <div className="my-4 flex flex-wrap items-center justify-center gap-2 font-mono text-[11px] text-white/90">
+                  <span className="rounded-lg bg-black/60 px-2.5 py-1 border border-white/10">🍎 Apple Pay</span>
+                  <span className="rounded-lg bg-black/60 px-2.5 py-1 border border-white/10">🇬 Google Pay</span>
+                  <span className="rounded-lg bg-black/60 px-2.5 py-1 border border-white/10">💳 Credit / Debit Cards</span>
+                  <span className="rounded-lg bg-black/60 px-2.5 py-1 border border-white/10">🅿️ PayPal</span>
+                </div>
+
+                {/* Primary Button to Open Buy Me a Coffee */}
+                <div className="space-y-3 max-w-md mx-auto mt-5">
+                  <a
+                    href={bmcUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => sounds.playCoin()}
+                    className="w-full inline-flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#ffdd00] via-[#fca47a] to-[#ffdd00] px-6 py-4 font-sans text-sm sm:text-base font-extrabold uppercase tracking-wider text-black shadow-xl shadow-yellow-500/25 hover:scale-[1.02] active:scale-95 transition-all"
+                  >
+                    <Coffee size={20} />
+                    <span>Drop ${selectedUsdAmount} on Buy Me a Coffee</span>
+                    <ExternalLink size={16} />
+                  </a>
+
+                  {/* Claim on Wall of Legends */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      sounds.playMissionPassed();
+                      // Approximate USD to INR for leaderboard display ($1 ≈ ₹85)
+                      const approxInr = Math.round(selectedUsdAmount * 85);
+                      onOpenPaymentModal(approxInr);
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] px-4 py-3 text-xs sm:text-sm font-bold text-white transition-all active:scale-95"
+                  >
+                    <CheckCircle size={15} className="text-[#ffdd00]" />
+                    <span>I Paid on Buy Me a Coffee! Add Me to Wall of Legends</span>
+                    <ArrowRight size={14} />
                   </button>
                 </div>
-                <div className="mt-1 text-[11px] text-[#a19bb5]">
-                  Payee: <strong className="text-[#fdfbf7]">{upiConfig.payeeName}</strong>
+
+                <div className="mt-4 text-[11px] text-[#a19bb5] flex items-center justify-center gap-1.5 font-mono">
+                  <ShieldCheck size={13} className="text-emerald-400" />
+                  <span>Direct checkout link: <code className="text-[#ffdd00]">buymeacoffee.com/anonymous9909</code></span>
                 </div>
               </div>
-
-              {/* Direct UPI Mobile Link */}
-              <div>
-                <a
-                  href={upiUrl}
-                  onClick={() => sounds.playCoin()}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-[#fca47a] px-4 py-2.5 font-sans text-xs sm:text-sm font-bold text-[#090514] transition-all hover:bg-[#ffb78e] active:scale-95 shadow-md"
-                >
-                  <Smartphone size={15} />
-                  <span>Open UPI App (Pay ₹{activeAmount})</span>
-                </a>
-              </div>
-
-              {/* Post-Payment Claim Clout */}
-              <div className="pt-2 border-t border-white/[0.06]">
-                <button
-                  onClick={() => {
-                    sounds.playMissionPassed();
-                    onOpenPaymentModal(activeAmount);
-                  }}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#e86b97] to-[#c084fc] px-4 py-3 font-sans text-xs sm:text-sm font-bold tracking-wide text-white transition-all hover:opacity-95 active:scale-95 shadow-md"
-                >
-                  <CheckCircle size={15} />
-                  <span>I Paid! Put Me on the Wall of Legends</span>
-                  <ArrowRight size={14} />
-                </button>
-              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>

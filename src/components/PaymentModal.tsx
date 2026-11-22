@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Send, Sparkles, ShieldCheck, Upload, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import { X, Send, Sparkles, ShieldCheck, Upload, Image as ImageIcon, AlertTriangle, Smartphone, Coffee } from 'lucide-react';
 import { SITE_CONFIG, getBadgeForAmount } from '@/config/site';
 import { Donation } from '@/types/donation';
 import { sounds } from '@/lib/sounds';
@@ -19,6 +19,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'buymeacoffee'>('upi');
   const [name, setName] = useState('');
   const [amount, setAmount] = useState<number>(initialAmount || 1);
   const [message, setMessage] = useState('');
@@ -86,10 +87,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setErrorMsg('');
 
     const cleanUtr = utrNumber.trim();
-    if (!cleanUtr || cleanUtr.length !== 12 || !/^\d{12}$/.test(cleanUtr)) {
-      setErrorMsg('Please enter a valid 12-digit numeric UPI Transaction ID (UTR) from your receipt.');
-      return;
+    if (paymentMethod === 'upi') {
+      if (!cleanUtr || cleanUtr.length !== 12 || !/^\d{12}$/.test(cleanUtr)) {
+        setErrorMsg('Please enter a valid 12-digit numeric UPI Transaction ID (UTR) from your receipt.');
+        return;
+      }
+    } else {
+      if (cleanUtr && !/^[A-Za-z0-9\-_#]{3,35}$/.test(cleanUtr)) {
+        setErrorMsg('Please enter a valid Buy Me a Coffee name or order reference (alphanumeric).');
+        return;
+      }
     }
+
+    const finalRef = cleanUtr || (paymentMethod === 'buymeacoffee' ? `BMC-${Date.now().toString(36).toUpperCase()}` : undefined);
 
     setIsSubmitting(true);
 
@@ -100,9 +110,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         body: JSON.stringify({
           name: name.trim() || 'Anonymous Legend',
           amount: Math.max(1, Number(amount) || 1),
-          message: message.trim() || 'Respect +1 for the GTA 6 fund! 🎮',
+          message: message.trim() || (paymentMethod === 'buymeacoffee' ? 'International Coffee sent! ☕🎮' : 'Respect +1 for the GTA 6 fund! 🎮'),
           badge: autoBadge,
-          utrNumber: cleanUtr,
+          utrNumber: finalRef,
           screenshotUrl,
         }),
       });
@@ -157,6 +167,39 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
         {/* The Form */}
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          {/* Payment Method Selector */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5">
+              Payment Source
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('upi')}
+                className={`flex items-center justify-center gap-1.5 rounded-xl py-2 px-3 text-xs font-bold transition-all ${
+                  paymentMethod === 'upi'
+                    ? 'bg-[#fca47a] text-black shadow-md'
+                    : 'border border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]'
+                }`}
+              >
+                <Smartphone size={13} />
+                <span>UPI (India)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPaymentMethod('buymeacoffee')}
+                className={`flex items-center justify-center gap-1.5 rounded-xl py-2 px-3 text-xs font-bold transition-all ${
+                  paymentMethod === 'buymeacoffee'
+                    ? 'bg-[#ffdd00] text-black shadow-md'
+                    : 'border border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]'
+                }`}
+              >
+                <Coffee size={13} />
+                <span>Buy Me a Coffee</span>
+              </button>
+            </div>
+          </div>
+
           {/* Name Field (Optional) */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
@@ -175,9 +218,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Amount Paid */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-              Amount Contributed (₹)
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                Amount Contributed {paymentMethod === 'upi' ? '(₹)' : '(₹ Equivalent, e.g. $1 ≈ ₹85)'}
+              </label>
+            </div>
             <div className="relative mt-1.5">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-[#e86b97]">₹</span>
               <input
@@ -225,25 +270,38 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             />
           </div>
 
-          {/* 12-Digit UTR / Transaction ID (Anti-Spam Validation) */}
+          {/* Reference / UTR Number */}
           <div>
             <div className="flex items-center justify-between">
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                UPI Reference / UTR Number <span className="text-[#fca47a] font-bold">*</span>
+                {paymentMethod === 'upi' ? 'UPI Reference / UTR Number' : 'Buy Me a Coffee Name / Order ID'}{' '}
+                <span className={paymentMethod === 'upi' ? 'text-[#fca47a] font-bold' : 'text-slate-400 font-normal lowercase'}>
+                  {paymentMethod === 'upi' ? '*' : '(optional)'}
+                </span>
               </label>
-              <span className="text-[10px] text-slate-500">12 Digits Required</span>
+              <span className="text-[10px] text-slate-500">
+                {paymentMethod === 'upi' ? '12 Digits Required' : 'Order or Supporter Name'}
+              </span>
             </div>
             <input
               type="text"
-              maxLength={12}
-              required
+              maxLength={paymentMethod === 'upi' ? 12 : 35}
+              required={paymentMethod === 'upi'}
               value={utrNumber}
-              onChange={(e) => setUtrNumber(e.target.value.replace(/[^0-9]/g, ''))}
-              placeholder="e.g. 432109876543 (from receipt)"
+              onChange={(e) => {
+                if (paymentMethod === 'upi') {
+                  setUtrNumber(e.target.value.replace(/[^0-9]/g, ''));
+                } else {
+                  setUtrNumber(e.target.value);
+                }
+              }}
+              placeholder={paymentMethod === 'upi' ? 'e.g. 432109876543 (from receipt)' : 'e.g. BMC-9821 or Supporter Name'}
               className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-mono tracking-wider text-[#fca47a] placeholder-slate-600 focus:border-[#fca47a] focus:ring-1 focus:ring-[#fca47a] focus:outline-none transition-colors"
             />
             <span className="text-[10px] text-slate-500 mt-1 block">
-              Found on your Google Pay / PhonePe / Paytm payment screen.
+              {paymentMethod === 'upi'
+                ? 'Found on your Google Pay / PhonePe / Paytm payment screen.'
+                : 'Enter your Buy Me a Coffee supporter name or order ID from email receipt.'}
             </span>
           </div>
 
