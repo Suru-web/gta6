@@ -68,8 +68,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ stats, totalVisits, on
         {/* Cinematic Main Title */}
         <h1 className="font-bebas text-5xl sm:text-7xl lg:text-8xl font-black uppercase tracking-tight leading-[0.95] text-[#fdfbf7]">
           CAN THE INTERNET BUY
-          <span className="block title-gradient mt-1">
-            ME GTA 6 FOR ₹1? 🎮💀
+          <span className="block mt-1">
+            <span className="title-gradient">ME GTA 6 FOR ₹1?</span>{' '}
+            <span className="emoji-natural inline-block align-middle ml-1">🎮💀</span>
           </span>
         </h1>
 

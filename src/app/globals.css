@@ -63,6 +63,15 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+/* Prevent text gradients from flattening colored emojis */
+.emoji-natural {
+  -webkit-text-fill-color: initial !important;
+  color: initial !important;
+  background: none !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
+}
+
 /* Atmospheric Glow Shadow */
 .atmospheric-glow {
   box-shadow: 0 10px 40px -10px rgba(232, 107, 151, 0.25);
