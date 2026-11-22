@@ -40,7 +40,7 @@ export const CheatCodeBox: React.FC = () => {
     { code: 'PANZER', label: '🚜 PANZER (Rhino Tank)' },
     { code: 'NUTTERTOOLS', label: '💣 NUTTERTOOLS (Weapons)' },
     { code: 'WASTED', label: '💀 WASTED' },
-    { code: 'MISSIONPASSED', label: '🏆 MISSION PASSED' },
+    { code: 'MISSIONPASSED', label: '🏆 RESPECT ++' },
     { code: 'VERCETTI', label: '🌴 TOMMY VERCETTI' },
     { code: 'BIGSMOKE', label: '🍔 BIG SMOKE' },
   ];

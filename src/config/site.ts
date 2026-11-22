@@ -235,13 +235,13 @@ export const SITE_CONFIG = {
     },
     {
       code: "MISSIONPASSED",
-      aliases: ["RESPECT"],
-      title: "MISSION PASSED! // RESPECT +999999",
-      effect: "You officially beat the internet! Authentic Vice City fanfare blasting!",
+      aliases: ["RESPECT", "RESPECT+", "RESPECT++", "RESPECT+++"],
+      title: "MISSION PASSED! // RESPECT ++",
+      effect: "Authentic GTA San Andreas & Vice City Respect fanfare blasting!",
       meme: "🏆 RESPECT +999999! Tommy Vercetti and Carl Johnson salute you.",
       type: "mission",
       sound: "mission",
-      badge: "🏆 RESPECT +999999"
+      badge: "🏆 RESPECT ++"
     },
     {
       code: "BIGSMOKE",

@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { SITE_CONFIG } from '@/config/site';
 import { UpiConfig } from '@/types/donation';
 import { 
   Copy, Check, Smartphone, CheckCircle, ArrowRight, 
-  Globe, Coffee, ExternalLink, CreditCard, ShieldCheck, Zap
+  Globe, Coffee, ExternalLink, CreditCard, ShieldCheck, Zap, MapPin
 } from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 
@@ -20,11 +20,41 @@ export const DonationCard: React.FC<DonationCardProps> = ({
   onOpenPaymentModal,
 }) => {
   const [region, setRegion] = useState<'india' | 'worldwide'>('india');
+  const [detectedCountry, setDetectedCountry] = useState<string>('');
   const [selectedAmount, setSelectedAmount] = useState<number>(1);
   const [selectedUsdAmount, setSelectedUsdAmount] = useState<number>(1);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [isCustom, setIsCustom] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
+
+  // Auto-detect country based on Vercel IP header and browser timezone
+  useEffect(() => {
+    // 1. Initial heuristic from client browser timezone
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+      const isIndiaTz = tz.includes('Calcutta') || tz.includes('Kolkata') || tz.includes('India');
+      if (!isIndiaTz) {
+        setRegion('worldwide');
+      }
+    } catch {
+      // fallback
+    }
+
+    // 2. Exact server IP geo-lookup from Vercel edge headers
+    async function checkGeo() {
+      try {
+        const res = await fetch('/api/geo');
+        const data = await res.json();
+        if (data.success && data.country && data.country !== 'UNKNOWN') {
+          setDetectedCountry(data.country);
+          setRegion(data.isIndia ? 'india' : 'worldwide');
+        }
+      } catch {
+        // keep fallback
+      }
+    }
+    checkGeo();
+  }, []);
 
   const customNum = Number(customAmount);
   const isCustomBelowMin = isCustom && customAmount !== '' && customNum < 100;
@@ -88,6 +118,16 @@ export const DonationCard: React.FC<DonationCardProps> = ({
       <div className="mx-auto max-w-3xl">
         <div className="rounded-3xl border border-white/[0.08] bg-[#120b22]/90 p-6 sm:p-8 backdrop-blur-2xl shadow-2xl">
           
+          {/* Auto-detected location badge */}
+          {detectedCountry && (
+            <div className="mb-3 flex items-center justify-center gap-1.5 text-xs text-[#a19bb5]">
+              <MapPin size={12} className="text-[#fca47a] animate-pulse" />
+              <span>
+                Detected location: <strong className="text-white">{detectedCountry}</strong> &bull; Auto-set to {region === 'india' ? '🇮🇳 India UPI' : '🌍 Worldwide Checkout'}
+              </span>
+            </div>
+          )}
+
           {/* REGION / PAYMENT METHOD SWITCHER TABS */}
           <div className="mb-6 flex justify-center">
             <div className="inline-flex rounded-2xl border border-white/[0.1] bg-black/60 p-1 backdrop-blur-md">

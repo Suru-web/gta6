@@ -21,8 +21,9 @@ class SoundController {
   // GTA / Vice City iconic audio assets
   public readonly gtaSounds: Record<string, string> = {
     cheat: '/sounds/gta-cheat.mp3',
-    missionPassed: '/sounds/vice-city-mission.mp3',
-    wasted: '/sounds/vice-city-death.mp3',
+    missionPassed: '/sounds/respect-plus.mp3',
+    respectPlus: '/sounds/respect-plus.mp3', // User's uploaded Respect +++ audio for payers
+    wasted: '/sounds/gta-wasted.mp3',       // User's uploaded GTA Wasted death audio
     police: '/sounds/police-radio.mp3',
     cash: '/sounds/cash-register.mp3',
     tommy: '/sounds/tommy-vercetti.mp3',
@@ -252,53 +253,18 @@ class SoundController {
   }
 
   /**
-   * GTA "Mission Passed" celebration fanfare chord
+   * Play user-uploaded Respect +++ fanfare (especially for people who have paid)
+   */
+  public playRespectPlus() {
+    this.playSound('respectPlus', 0.95);
+  }
+
+  /**
+   * GTA "Mission Passed" / Payer celebration fanfare (Plays user's Respect +++ audio)
    */
   public playMissionPassed() {
     if (!this.enabled) return;
-
-    // First play the "Thank You" sound (Sound 0)
-    this.playDonateSound(0);
-
-    const ctx = this.getContext();
-    if (!ctx) return;
-
-    try {
-      const now = ctx.currentTime;
-      const notes = [
-        { freq: 261.63, time: 0.0, dur: 0.15 }, // C4
-        { freq: 329.63, time: 0.12, dur: 0.15 }, // E4
-        { freq: 392.00, time: 0.24, dur: 0.2 }, // G4
-        { freq: 523.25, time: 0.40, dur: 0.6 }, // C5 (Triumph)
-        { freq: 659.25, time: 0.45, dur: 0.6 }, // E5
-        { freq: 783.99, time: 0.50, dur: 0.9 }, // G5 (Epic sustain)
-      ];
-
-      notes.forEach(({ freq, time, dur }) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(freq, now + time);
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(1200, now + time);
-        filter.frequency.exponentialRampToValueAtTime(3000, now + time + dur * 0.5);
-
-        gain.gain.setValueAtTime(0.12, now + time);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + time + dur);
-
-        osc.connect(filter);
-        filter.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(now + time);
-        osc.stop(now + time + dur);
-      });
-    } catch {
-      // Ignore
-    }
+    this.playRespectPlus();
   }
 
   /**
