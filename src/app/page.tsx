@@ -3,17 +3,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { TickerMarquee } from '@/components/TickerMarquee';
-import { HeroSection } from '@/components/HeroSection';
+import { GameContainer } from '@/components/game/GameContainer';
+import { Leaderboard } from '@/components/game/Leaderboard';
+import { SideQuestPanel } from '@/components/SideQuestPanel';
 import { DonationCard } from '@/components/DonationCard';
-import { MemeReasonsGrid } from '@/components/MemeReasonsGrid';
 import { DonorsCarousel } from '@/components/DonorsCarousel';
 import { CheatCodeBox } from '@/components/CheatCodeBox';
+import { AboutSection } from '@/components/AboutSection';
 import { PaymentModal } from '@/components/PaymentModal';
 import { ThankYouModal } from '@/components/ThankYouModal';
 import { Footer } from '@/components/Footer';
 import { Donation, SiteStats, UpiConfig } from '@/types/donation';
 import { SITE_CONFIG } from '@/config/site';
 import initialSeed from '@/data/seed-donations.json';
+import { useRouter } from 'next/navigation';
 
 const defaultStats: SiteStats = {
   targetAmount: SITE_CONFIG.targetAmount,
@@ -32,6 +35,7 @@ const defaultStats: SiteStats = {
 };
 
 export default function HomePage() {
+  const router = useRouter();
   const [donations, setDonations] = useState<Donation[]>(initialSeed as Donation[]);
   const [stats, setStats] = useState<SiteStats>(defaultStats);
   const [upiConfig, setUpiConfig] = useState<UpiConfig>({
@@ -78,7 +82,7 @@ export default function HomePage() {
     trackVisit();
   }, []);
 
-  // Fetch active UPI config from server (configured by admin)
+  // Fetch active UPI config from server
   useEffect(() => {
     async function loadConfig() {
       try {
@@ -94,14 +98,14 @@ export default function HomePage() {
     loadConfig();
   }, []);
 
-  // Fetch real-time donations from API with cache-busting
+  // Fetch real-time donations from API
   const fetchDonations = useCallback(async () => {
     try {
       const res = await fetch(`/api/donations?_t=${Date.now()}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
+          Pragma: 'no-cache',
         },
       });
       const data = await res.json();
@@ -116,10 +120,8 @@ export default function HomePage() {
     }
   }, []);
 
-  // Real-time polling & sync across mobile and desktop
   useEffect(() => {
     fetchDonations();
-
     const interval = setInterval(fetchDonations, 4000);
 
     const handleVisibility = () => {
@@ -176,65 +178,93 @@ export default function HomePage() {
 
   return (
     <div className="retro-grid min-h-screen flex flex-col justify-between selection:bg-yellow-400 selection:text-black">
-      {/* Top Navbar */}
+      
+      {/* Top Navigation Bar */}
       <Navbar
         stats={stats}
         totalVisits={totalVisits}
+        onScrollToFight={() => scrollTo('game-arena')}
+        onScrollToRankings={() => scrollTo('global-rankings')}
+        onScrollToQuest={() => scrollTo('side-quest')}
         onScrollToLegends={() => scrollTo('hall-of-fame')}
+        onScrollToAbout={() => scrollTo('about-section')}
       />
 
-      {/* Infinite Top Ticker */}
+      {/* Real-Time Ticker Marquee */}
       <TickerMarquee donations={donations} />
 
-      {/* Main Content */}
-      <main className="flex-1 space-y-4">
-        {/* Hero Section with Crying Beggar Mascot & Retro Progress Bar */}
-        <HeroSection
+      <main className="flex-1 space-y-6">
+        
+        {/* ======================================================== */}
+        {/* 1. HERO & FIGHTING GAME: GTA LEGENDS ARENA (MAIN EVENT)   */}
+        {/* ======================================================== */}
+        <section id="game-arena">
+          <GameContainer
+            onOpenSideQuest={() => scrollTo('side-quest')}
+            onScrollToLeaderboard={() => scrollTo('global-rankings')}
+          />
+        </section>
+
+        {/* ======================================================== */}
+        {/* 2. GLOBAL GTA FIGHTER RANKINGS (THE LEADERBOARD)         */}
+        {/* ======================================================== */}
+        <Leaderboard onFightNow={() => scrollTo('game-arena')} />
+
+        {/* ======================================================== */}
+        {/* 3. SIDE QUEST COMPACT DASHBOARD (HELP ME GET GTA VI)     */}
+        {/* ======================================================== */}
+        <SideQuestPanel
           stats={stats}
-          totalVisits={totalVisits}
-          onScrollToDonate={() => scrollTo('donate-section')}
+          donations={donations}
+          onOpenDonate={() => scrollTo('donate-section')}
+          onOpenFullQuest={() => router.push('/side-quest')}
         />
 
-        {/* The Direct UPI Donation Card with QR Code */}
+        {/* ======================================================== */}
+        {/* 4. DONATION CHECKOUT CARD (UPI QR & BUY ME A COFFEE)     */}
+        {/* ======================================================== */}
         <DonationCard
           upiConfig={upiConfig}
-          onOpenPaymentModal={(amt) => {
-            setSelectedPayAmount(amt);
+          onOpenPaymentModal={(amount) => {
+            setSelectedPayAmount(amount);
             setIsPaymentModalOpen(true);
           }}
         />
 
-        {/* 4 Funny Meme Cards: The Hard Truth */}
-        <MemeReasonsGrid />
-
-        {/* Wall of Legends: Who Paid How Much */}
+        {/* ======================================================== */}
+        {/* 5. WALL OF LEGENDS (BACKERS CAROUSEL)                    */}
+        {/* ======================================================== */}
         <DonorsCarousel donations={donations} />
 
-        {/* Cheat Code Terminal */}
+        {/* ======================================================== */}
+        {/* 6. LEONIDA DEVELOPER TERMINAL (CLASSIC ROCKSTAR CHEATS)  */}
+        {/* ======================================================== */}
         <CheatCodeBox />
+
+        {/* ======================================================== */}
+        {/* 7. ABOUT THE PROJECT (HOW IT WORKS)                      */}
+        {/* ======================================================== */}
+        <AboutSection />
+
       </main>
 
       {/* Footer */}
-      <Footer
-        onScrollToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-      />
+      <Footer onScrollToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
 
-      {/* Modals */}
+      {/* Payment Proof Submission Modal */}
       <PaymentModal
         isOpen={isPaymentModalOpen}
-        initialAmount={selectedPayAmount}
         onClose={() => setIsPaymentModalOpen(false)}
+        initialAmount={selectedPayAmount}
         onSuccess={handleDonationSuccess}
       />
 
+      {/* Celebration Modal */}
       <ThankYouModal
         isOpen={isThankYouOpen}
-        donation={latestDonation}
         onClose={() => setIsThankYouOpen(false)}
-        onViewHallOfFame={() => {
-          setIsThankYouOpen(false);
-          scrollTo('hall-of-fame');
-        }}
+        donation={latestDonation}
+        onViewHallOfFame={() => scrollTo('hall-of-fame')}
       />
     </div>
   );
