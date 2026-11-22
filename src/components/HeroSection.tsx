@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { SiteStats } from '@/types/donation';
-import { Dices, Calendar, Sparkles, Eye } from 'lucide-react';
+import { Dices, Calendar, Sparkles, Eye, ArrowDown } from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 
 interface HeroSectionProps {
@@ -67,16 +67,16 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ stats, totalVisits, on
 
         {/* Cinematic Main Title */}
         <h1 className="font-bebas text-5xl sm:text-7xl lg:text-8xl font-black uppercase tracking-tight leading-[0.95] text-[#fdfbf7]">
-          HELP A BROTHER OUT
+          CAN THE INTERNET BUY
           <span className="block title-gradient mt-1">
-            TO PLAY GTA VI
+            ME GTA 6 FOR ₹1? 🎮💀
           </span>
         </h1>
 
         {/* Editorial Subtitle */}
         <p className="mx-auto mt-4 max-w-2xl text-sm sm:text-base text-[#a19bb5] leading-relaxed font-normal">
           Rockstar waited <strong className="text-[#fdfbf7] font-semibold">12+ years</strong>. My wallet has <strong className="text-[#fca47a] font-semibold">₹0.00</strong>.
-          Contribute <strong className="text-[#e86b97] font-semibold">₹1, ₹100, or any custom amount</strong> via UPI to save a fellow gamer from experiencing Vice City through 480p YouTube playthroughs.
+          An interactive social experiment. Drop <strong className="text-[#e86b97] font-semibold">just ₹1 (or any amount)</strong> via UPI to immortalize yourself on the live Wall of Legends and save a brother from 480p YouTube playthroughs.
         </p>
 
         {/* EDITORIAL IN-GAME DIALOGUE (REPLACING THE CARTOON BUBBLE) */}
@@ -161,6 +161,20 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ stats, totalVisits, on
               {stats.percentComplete}% ({stats.remainingAmount > 0 ? `₹${stats.remainingAmount.toLocaleString('en-IN')} to go` : 'Goal Reached!'})
             </span>
           </div>
+        </div>
+
+        {/* High-Converting Direct CTA Button */}
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={() => {
+              sounds.playClick();
+              onScrollToDonate();
+            }}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#e86b97] via-[#fca47a] to-[#c084fc] px-8 py-3.5 font-sans text-xs sm:text-sm font-extrabold uppercase tracking-wider text-black shadow-lg shadow-pink-500/25 hover:scale-[1.03] active:scale-95 transition-all"
+          >
+            <span>⚡ Drop ₹1 &amp; Join the Heist</span>
+            <ArrowDown size={16} />
+          </button>
         </div>
       </div>
     </section>

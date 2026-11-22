@@ -16,7 +16,7 @@ export const DonationCard: React.FC<DonationCardProps> = ({
   upiConfig,
   onOpenPaymentModal,
 }) => {
-  const [selectedAmount, setSelectedAmount] = useState<number>(69);
+  const [selectedAmount, setSelectedAmount] = useState<number>(1);
   const [customAmount, setCustomAmount] = useState<string>('');
   const [isCustom, setIsCustom] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);

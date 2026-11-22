@@ -20,7 +20,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onSuccess,
 }) => {
   const [name, setName] = useState('');
-  const [amount, setAmount] = useState<number>(initialAmount || 69);
+  const [amount, setAmount] = useState<number>(initialAmount || 1);
   const [message, setMessage] = useState('');
   const [utrNumber, setUtrNumber] = useState('');
   const [screenshotUrl, setScreenshotUrl] = useState<string>('');
@@ -88,11 +88,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     const cleanUtr = utrNumber.trim();
     if (!cleanUtr || cleanUtr.length !== 12 || !/^\d{12}$/.test(cleanUtr)) {
       setErrorMsg('Please enter a valid 12-digit numeric UPI Transaction ID (UTR) from your receipt.');
-      return;
-    }
-
-    if (!screenshotUrl) {
-      setErrorMsg('Please upload a screenshot of your payment confirmation screen.');
       return;
     }
 
@@ -256,7 +251,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           <div>
             <div className="flex items-center justify-between">
               <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-                Payment Screenshot / Receipt <span className="text-[#fca47a] font-bold">*</span>
+                Payment Screenshot / Receipt <span className="text-[#a19bb5] font-normal lowercase">(optional)</span>
               </label>
               {screenshotUrl && <span className="text-[10px] text-emerald-400 font-semibold">✓ Attached</span>}
             </div>
@@ -265,12 +260,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <label className="flex-1 cursor-pointer inline-flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/[0.03] px-4 py-3 text-xs font-semibold text-slate-300 hover:border-[#e86b97] hover:bg-white/[0.06] transition-all">
                 <Upload size={15} className="text-[#e86b97]" />
                 <span className="truncate max-w-[200px]">
-                  {screenshotName ? screenshotName : 'Upload UPI Screenshot'}
+                  {screenshotName ? screenshotName : 'Upload UPI Screenshot (Optional)'}
                 </span>
                 <input
                   type="file"
                   accept="image/*"
-                  required
                   onChange={handleScreenshotChange}
                   className="hidden"
                 />
