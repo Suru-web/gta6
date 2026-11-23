@@ -6,6 +6,7 @@ import { GLTFCharacterLoader, CombatAnimations } from './gltfCharacter';
 import { MoveDefinition } from '../moves';
 import { attackClipTime, attackExtension } from '../attackTimeline';
 import { CrouchPose } from './crouchPose';
+import { NikoPose } from './nikoPose';
 
 export class CharacterModel3D {
   public group: THREE.Group;
@@ -19,6 +20,7 @@ export class CharacterModel3D {
   private idleClip: THREE.AnimationClip | null = null;
   private lastTime: number = 0;
   private crouchPose: CrouchPose | null = null;
+  private nikoPose: NikoPose | null = null;
 
   // Hierarchical Body Parts / Joint Nodes
   public hips: THREE.Group;
@@ -266,6 +268,7 @@ export class CharacterModel3D {
       if (gltfModel && gltfModel.scene) {
         this.customModel = gltfModel.scene;
         this.crouchPose = new CrouchPose(this.customModel);
+        if (character.id === 'niko-bellic') this.nikoPose = new NikoPose(this.customModel);
         this.group.add(this.customModel);
         this.hips.visible = false;
 
@@ -279,6 +282,10 @@ export class CharacterModel3D {
           idleAction.play();
           this.currentAction = idleAction;
         }
+
+        // Shared mocap tracks can only bind to a Mixamo rig. Niko uses a
+        // ValveBiped skeleton and is posed separately below.
+        if (!this.customModel.getObjectByName('mixamorigHips')) return;
 
         // Load and setup shared mocap combat actions
         const clips = await CombatAnimations.loadClips();
@@ -411,7 +418,7 @@ export class CharacterModel3D {
           delta = Math.min(0.05, time - this.lastTime);
         }
         this.lastTime = time;
-        if (move && this.currentAction && ['punch', 'kick', 'grab', 'super'].includes(state)) {
+        if (move && this.currentAction && this.currentAction !== this.actions.get('idle') && ['punch', 'kick', 'grab', 'super'].includes(state)) {
           this.currentAction.paused = true;
           // If the special asset is still loading, use the punch's own timeline.
           const timingMove = state === 'super' && this.currentAction === this.actions.get('punch') ? { ...move, type: 'punch' as const } : move;
@@ -485,7 +492,11 @@ export class CharacterModel3D {
         }
 
         case 'getting_up': {
-          this.customModel.position.y = -0.15 * (1 - frame / 18);
+          if (this.nikoPose?.available) {
+            this.customModel.rotation.x = -Math.PI / 2 * (1 - Math.min(1, frame / 18));
+          } else {
+            this.customModel.position.y = -0.15 * (1 - frame / 18);
+          }
           break;
         }
 
@@ -530,6 +541,9 @@ export class CharacterModel3D {
         }
 
         case 'knockdown': {
+          if (this.nikoPose?.available) {
+            this.customModel.rotation.x = -Math.PI / 2 * Math.min(1, frame / 12);
+          }
           if (frame >= 35) {
             // Get-up transition: crossfade back to idle
             if (this.actions.has('idle') && this.currentAction !== this.actions.get('idle')) {
@@ -548,6 +562,7 @@ export class CharacterModel3D {
           break;
         }
       }
+      this.nikoPose?.apply(state, time, move ? attackExtension(move, frame) : 0);
       return;
     }
 

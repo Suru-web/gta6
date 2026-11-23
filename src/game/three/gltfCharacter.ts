@@ -5,6 +5,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { CHARACTER_MATERIAL_BINDINGS } from './characterMaterials';
+import { repairCharacterAsset } from './modelAssetFixes';
 
 export interface LoadedGLTFModel {
   scene: THREE.Group;
@@ -330,6 +331,7 @@ export class GLTFCharacterLoader {
         const gltf = await gltfLoader.loadAsync(glbUrl);
         const root = gltf.scene;
 
+        repairCharacterAsset(characterId, root);
         root.updateMatrixWorld(true);
         root.traverse((node) => {
           if ((node as THREE.SkinnedMesh).isSkinnedMesh) {
