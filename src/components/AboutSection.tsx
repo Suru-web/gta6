@@ -1,10 +1,9 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { Gamepad2, HeartHandshake, ShieldCheck, Sparkles, Terminal, Trophy } from 'lucide-react';
+import { Gamepad2, HeartHandshake, ShieldCheck, Terminal } from 'lucide-react';
 
-export const AboutSection: React.FC = () => {
+export const AboutSection: React.FC<{ showSideQuest?: boolean }> = ({ showSideQuest = true }) => {
   return (
     <section id="about-section" className="relative px-4 py-12 sm:py-16">
       <div className="max-w-4xl mx-auto">
@@ -15,10 +14,10 @@ export const AboutSection: React.FC = () => {
               ABOUT THE PROJECT
             </span>
             <h2 className="mt-2 font-bebas text-4xl sm:text-5xl text-white tracking-wider">
-              GTA LEGENDS ARENA & THE ₹1 SOCIAL EXPERIMENT
+              {showSideQuest ? 'GTA LEGENDS ARENA & THE ₹1 SOCIAL EXPERIMENT' : 'GTA LEGENDS ARENA'}
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-[#a19bb5] font-mono max-w-xl mx-auto">
-              How a meme experiment turned into an arcade fighting showdown and community fundraiser.
+              {showSideQuest ? 'How a meme experiment turned into an arcade fighting showdown and community fundraiser.' : 'A fan-made arcade fighting showdown across the GTA universe.'}
             </p>
           </div>
 
@@ -39,7 +38,7 @@ export const AboutSection: React.FC = () => {
             </div>
 
             {/* 2. The Side Quest Social Experiment */}
-            <div className="rounded-2xl border border-white/5 bg-black/40 p-5 space-y-2">
+            {showSideQuest && <div className="rounded-2xl border border-white/5 bg-black/40 p-5 space-y-2">
               <div className="flex items-center gap-2 text-white font-bold text-sm">
                 <HeartHandshake size={16} className="text-yellow-400" />
                 <span>The ₹1 / $1 Side Quest</span>
@@ -50,7 +49,7 @@ export const AboutSection: React.FC = () => {
               <p>
                 Contributors from India (via instant UPI QR) and international backers (via Buy Me a Coffee) can immortalize their name on the live Wall of Legends and hear the victory fanfare.
               </p>
-            </div>
+            </div>}
 
             {/* 3. Fair Play & Data Integrity */}
             <div className="rounded-2xl border border-white/5 bg-black/40 p-5 space-y-2">

@@ -44,21 +44,21 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onFightNow }) => {
   const list = getActiveList();
 
   return (
-    <section id="global-rankings" className="relative px-4 py-10 sm:py-16">
+    <section id="global-rankings" className="arena-rankings relative px-4 py-10 sm:py-16">
       <div className="max-w-5xl mx-auto">
         
         {/* Section Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-widest text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 px-3 py-1 rounded-full mb-2">
+        <div className="text-left mb-8">
+          <div className="arena-eyebrow mb-4">
             <Trophy size={13} />
-            <span>GLOBAL COMMUNITY FIGHT STATS</span>
+            <span>THE LEADERBOARD</span>
           </div>
 
           <h2 className="font-bebas text-4xl sm:text-6xl text-white tracking-wider">
-            WHO IS THE STRONGEST GTA LEGEND?
+            The fight for the top.
           </h2>
-          <p className="text-xs sm:text-sm text-[#a19bb5] font-mono max-w-xl mx-auto">
-            Real statistics aggregated from every completed match played by visitors across the globe.
+          <p className="text-sm text-[#bcb0a7] max-w-xl mt-2">
+            Every completed match leaves its mark. See how the fighters stack up.
           </p>
 
           {data && (
@@ -79,7 +79,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onFightNow }) => {
               }}
               className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-mono uppercase font-bold rounded-xl transition-all ${
                 activeTab === 'strength'
-                  ? 'bg-gradient-to-r from-[#fca47a] to-[#e86b97] text-[#090514] shadow'
+                  ? 'bg-[#e4aa86] text-[#201b19]'
                   : 'text-[#a19bb5] hover:text-white'
               }`}
             >
@@ -95,7 +95,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onFightNow }) => {
               }}
               className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-mono uppercase font-bold rounded-xl transition-all ${
                 activeTab === 'victories'
-                  ? 'bg-yellow-400 text-black shadow'
+                  ? 'bg-[#e4aa86] text-[#201b19]'
                   : 'text-[#a19bb5] hover:text-white'
               }`}
             >
@@ -111,7 +111,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onFightNow }) => {
               }}
               className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-mono uppercase font-bold rounded-xl transition-all ${
                 activeTab === 'winrate'
-                  ? 'bg-emerald-500 text-black shadow'
+                  ? 'bg-[#e4aa86] text-[#201b19]'
                   : 'text-[#a19bb5] hover:text-white'
               }`}
             >
@@ -127,7 +127,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onFightNow }) => {
               }}
               className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-mono uppercase font-bold rounded-xl transition-all ${
                 activeTab === 'popular'
-                  ? 'bg-cyan-400 text-black shadow'
+                  ? 'bg-[#e4aa86] text-[#201b19]'
                   : 'text-[#a19bb5] hover:text-white'
               }`}
             >
@@ -151,7 +151,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ onFightNow }) => {
         </div>
 
         {/* Leaderboard Table / Cards */}
-        <div className="bg-[#120b22]/90 border border-white/[0.08] rounded-3xl overflow-hidden backdrop-blur-xl shadow-2xl">
+        <div className="bg-[#120b22]/90 border border-white/[0.08] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left font-mono text-xs">
               <thead>

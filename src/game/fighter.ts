@@ -1,5 +1,7 @@
 import { Character } from '@/types/game';
-import { ActionState, AttackType, Rect } from './types';
+import { ActionState, AttackType, AttackPhase, Rect, HitResult } from './types';
+import { MoveDefinition, AttackKind, getCharacterMove, calculateComboDamage } from './moves';
+import { attackExtension } from './attackTimeline';
 import { gameAudio } from './audio';
 
 export interface FighterInput {
@@ -36,8 +38,20 @@ export class Fighter {
   public isGrounded: boolean = true;
   public attackHit: boolean = false;
   public currentAttackType: AttackType = null;
+  public attackPhase: AttackPhase = 'none';
+  public currentMove: MoveDefinition | null = null;
+  public superVariant: 0 | 1 = 0;
+  private nextSuperVariant: 0 | 1 = 0;
+
   public hitstunFrames: number = 0;
+  public blockstunFrames: number = 0;
+  public hitstopFrames: number = 0;
   public isBlocking: boolean = false;
+  public invincibleFrames: number = 0;
+  public attackCooldown: number = 0; // Anti-mash delay between attacks
+
+  // Input buffering (up to 5 frames)
+  private inputBuffer: { attack: AttackKind; framesRemaining: number } | null = null;
 
   public comboCounter: number = 0;
   public comboTimer: number = 0;
@@ -68,9 +82,46 @@ export class Fighter {
     this.isGrounded = true;
     this.attackHit = false;
     this.currentAttackType = null;
+    this.attackPhase = 'none';
+    this.currentMove = null;
+    this.superVariant = 0;
+    this.nextSuperVariant = 0;
+    this.invincibleFrames = 0;
     this.hitstunFrames = 0;
+    this.blockstunFrames = 0;
+    this.hitstopFrames = 0;
     this.isBlocking = false;
+    this.attackCooldown = 0;
+    this.inputBuffer = null;
     this.health = this.maxHealth;
+    this.facing = this.isPlayer ? 1 : -1;
+  }
+
+  public isAttacking(): boolean {
+    return ['punch', 'kick', 'grab', 'super'].includes(this.state);
+  }
+
+  public isInStartup(): boolean {
+    return this.isAttacking() && this.attackPhase === 'startup';
+  }
+
+  public isInActive(): boolean {
+    return this.isAttacking() && this.attackPhase === 'active';
+  }
+
+  public isInRecovery(): boolean {
+    return this.isAttacking() && this.attackPhase === 'recovery';
+  }
+
+  public canAct(): boolean {
+    if (this.hitstopFrames > 0) return false;
+    if (['hitstun', 'blockstun', 'knockdown', 'getting_up', 'victory', 'defeat'].includes(this.state)) return false;
+    if (this.isAttacking()) return false;
+    return true;
+  }
+
+  public canBlock(): boolean {
+    return this.isGrounded && !this.isAttacking() && !['hitstun', 'knockdown', 'getting_up'].includes(this.state);
   }
 
   public getHurtbox(): Rect {
@@ -84,80 +135,32 @@ export class Fighter {
     };
   }
 
-  public getHitbox(): (Rect & { type: AttackType; damage: number; knockback: number }) | null {
-    if (this.attackHit) return null;
-
-    const reachBonus = (this.character.stats.strength - 100) * 0.15;
-
-    // 1. PUNCH: Active frames 4 to 9
-    if (this.state === 'punch' && this.stateFrame >= 4 && this.stateFrame <= 9) {
-      const punchWidth = 48 + reachBonus;
-      const punchHeight = 28;
-      const hitX = this.facing === 1 ? this.x + 8 : this.x - 8 - punchWidth;
-      const hitY = this.y - this.height * 0.72;
-      return {
-        x: hitX,
-        y: hitY,
-        width: punchWidth,
-        height: punchHeight,
-        type: 'punch',
-        damage: Math.round(10 * (this.character.stats.strength / 100)),
-        knockback: 5,
-      };
+  public getHitbox(): (Rect & { type: AttackType; damage: number; knockback: number; hitstop: number; isUnblockable: boolean }) | null {
+    // Damage can ONLY connect during valid ACTIVE frames and only ONCE per attack instance
+    if (!this.isInActive() || this.attackHit || !this.currentMove) {
+      return null;
     }
 
-    // 2. KICK: Active frames 6 to 13
-    if (this.state === 'kick' && this.stateFrame >= 6 && this.stateFrame <= 13) {
-      const kickWidth = 62 + reachBonus;
-      const kickHeight = 32;
-      const hitX = this.facing === 1 ? this.x + 10 : this.x - 10 - kickWidth;
-      const hitY = this.y - this.height * 0.45;
-      return {
-        x: hitX,
-        y: hitY,
-        width: kickWidth,
-        height: kickHeight,
-        type: 'kick',
-        damage: Math.round(16 * (this.character.stats.strength / 100)),
-        knockback: 9,
-      };
-    }
+    const move = this.currentMove;
+    const hitWidth = move.range * attackExtension(move, this.stateFrame);
+    const hitHeight = move.height;
+    // The damaging area is at the end of the strike, not a rectangle covering
+    // the entire space between the fighter and the far end of their reach.
+    const tipWidth = Math.min(hitWidth, move.type === 'grab' ? 35 : 30);
+    const hitX = this.facing === 1 ? this.x + 8 + hitWidth - tipWidth : this.x - 8 - hitWidth;
+    const hitY = this.y - this.height * move.yOffsetRatio;
 
-    // 3. GRAB: Active frames 5 to 11 (close range)
-    if (this.state === 'grab' && this.stateFrame >= 5 && this.stateFrame <= 11) {
-      const grabWidth = 38;
-      const grabHeight = 50;
-      const hitX = this.facing === 1 ? this.x : this.x - grabWidth;
-      const hitY = this.y - this.height * 0.75;
-      return {
-        x: hitX,
-        y: hitY,
-        width: grabWidth,
-        height: grabHeight,
-        type: 'grab',
-        damage: Math.round(22 * (this.character.stats.strength / 100)),
-        knockback: 14,
-      };
-    }
-
-    // 4. SUPER ATTACK: Active frames 8 to 22
-    if (this.state === 'super' && this.stateFrame >= 8 && this.stateFrame <= 22) {
-      const superWidth = 90 + reachBonus;
-      const superHeight = 85;
-      const hitX = this.facing === 1 ? this.x + 12 : this.x - 12 - superWidth;
-      const hitY = this.y - this.height * 0.85;
-      return {
-        x: hitX,
-        y: hitY,
-        width: superWidth,
-        height: superHeight,
-        type: 'super',
-        damage: Math.round(this.character.specialMove.damage * (this.character.stats.strength / 100)),
-        knockback: 22,
-      };
-    }
-
-    return null;
+    return {
+      x: hitX,
+      y: hitY,
+      width: tipWidth,
+      height: hitHeight,
+      type: move.type,
+      damage: move.baseDamage,
+      knockback: move.knockback,
+      hitstop: move.hitstopFrames,
+      isUnblockable: move.isUnblockable,
+    };
   }
 
   public takeDamage(
@@ -165,84 +168,181 @@ export class Fighter {
     attackType: AttackType,
     fromDirection: number,
     isSuper: boolean = false
-  ): { blocked: boolean; actualDamage: number } {
-    if (this.state === 'knockdown' || this.health <= 0) {
-      return { blocked: false, actualDamage: 0 };
+  ): HitResult {
+    // 1. Invincibility or Knockdown protection
+    if (this.invincibleFrames > 0 || this.state === 'knockdown' || this.state === 'getting_up' || this.health <= 0) {
+      return {
+        hit: false,
+        blocked: false,
+        actualDamage: 0,
+        isCounterHit: false,
+        hitstopFrames: 0,
+        knockdown: false,
+      };
     }
 
-    // Check Block: If holding back away from attack (Grabs cannot be blocked)
-    const canBlock = attackType !== 'grab';
-    const holdingBack = (this.facing === 1 && fromDirection === 1 && this.isBlocking) ||
-                        (this.facing === -1 && fromDirection === -1 && this.isBlocking);
+    const move = attackType ? getCharacterMove(this.character, attackType as AttackKind) : null;
+    const isGrab = move?.isUnblockable || attackType === 'grab';
+    const hitstop = move ? move.hitstopFrames : 5;
 
-    if (canBlock && holdingBack) {
-      // Successful Block: 80% damage reduction, no hitstun
-      const chipDamage = Math.max(1, Math.round(amount * 0.2));
-      this.health = Math.max(0, this.health - chipDamage);
+    // 2. Check Blocking: Defender is holding back away from the attack (Grabs pierce blocks)
+    const isFacingAttacker = (this.facing === 1 && fromDirection === -1) ||
+                             (this.facing === -1 && fromDirection === 1);
+    const holdingBack = isFacingAttacker && this.isBlocking;
+
+    if (holdingBack && !isGrab && this.canBlock()) {
+      // Successful Block
+      const chipRatio = move ? move.chipRatio : 0.15;
+      const chipDamage = Math.max(1, Math.round(amount * chipRatio));
+      this.health = Math.max(1, this.health - chipDamage); // Chip damage cannot KO
       this.totalDamageTaken += chipDamage;
-      this.vx = fromDirection * 3.5; // slight block pushback
+
+      this.state = 'blockstun';
+      this.stateFrame = 0;
+      this.blockstunFrames = move ? move.blockstunFrames : 8;
+      this.hitstopFrames = hitstop;
+      this.vx = fromDirection * 3.8; // Block pushback
+
       gameAudio.playBlock();
-      return { blocked: true, actualDamage: chipDamage };
+      return {
+        hit: true,
+        blocked: true,
+        actualDamage: chipDamage,
+        isCounterHit: false,
+        hitstopFrames: hitstop,
+        knockdown: false,
+      };
     }
 
-    // Direct Hit
+    // 3. Direct Clean Hit (or Counter Hit)
+    const isCounterHit = this.isInStartup() || this.isInActive();
+    const counterMultiplier = isCounterHit ? 1.20 : 1.0;
+
+    // Combo Scaling
+    const scaledDamage = calculateComboDamage(amount, this.comboCounter);
     const defenceFactor = 100 / this.character.stats.defence;
-    const actualDamage = Math.max(2, Math.round(amount * defenceFactor));
+    const actualDamage = Math.max(2, Math.round(scaledDamage * counterMultiplier * defenceFactor));
 
     this.health = Math.max(0, this.health - actualDamage);
     this.totalDamageTaken += actualDamage;
 
-    // Build super meter on taking damage
+    // Super meter build on taking damage
     this.superMeter = Math.min(100, this.superMeter + 4);
+    this.hitstopFrames = hitstop;
 
+    // 4. Knockout Check
     if (this.health <= 0) {
       this.state = 'knockdown';
       this.stateFrame = 0;
       this.vx = fromDirection * 12;
-      this.vy = -7;
+      this.vy = -7.5;
       this.isGrounded = false;
+      this.attackPhase = 'none';
+      this.currentAttackType = null;
+      this.currentMove = null;
       gameAudio.playKnockout();
-      return { blocked: false, actualDamage };
+      return {
+        hit: true,
+        blocked: false,
+        actualDamage,
+        isCounterHit,
+        hitstopFrames: hitstop + 4,
+        knockdown: true,
+      };
     }
 
-    // Hit reaction
-    if (attackType === 'super' || attackType === 'grab' || actualDamage >= 24) {
+    // 5. Knockdown or Hitstun State
+    const causesKnockdown = (move?.causesKnockdown ?? false) || isSuper || isGrab || actualDamage >= 26;
+
+    if (causesKnockdown) {
       this.state = 'knockdown';
       this.stateFrame = 0;
-      this.vx = fromDirection * (isSuper ? 18 : 12);
-      this.vy = -6;
+      this.vx = fromDirection * (isSuper ? 17 : 11);
+      this.vy = -6.2;
       this.isGrounded = false;
+      this.attackPhase = 'none';
+      this.currentAttackType = null;
+      this.currentMove = null;
     } else {
       this.state = 'hitstun';
       this.stateFrame = 0;
-      this.hitstunFrames = attackType === 'kick' ? 14 : 10;
-      this.vx = fromDirection * (attackType === 'kick' ? 7 : 4);
+      const baseStun = move ? move.hitstunFrames : 18;
+      this.hitstunFrames = isCounterHit ? baseStun + 4 : baseStun;
+      this.vx = fromDirection * (move ? move.knockback * 0.7 : 4);
+      this.attackPhase = 'none';
+      this.currentAttackType = null;
+      this.currentMove = null;
     }
 
     if (attackType === 'kick') gameAudio.playKick();
     else gameAudio.playPunch();
 
-    return { blocked: false, actualDamage };
+    return {
+      hit: true,
+      blocked: false,
+      actualDamage,
+      isCounterHit,
+      hitstopFrames: hitstop,
+      knockdown: causesKnockdown,
+    };
   }
 
   public registerHitLanded(damageDealt: number, attackType: AttackType) {
     this.attackHit = true;
     this.totalDamageDealt += damageDealt;
     this.comboCounter += 1;
-    this.comboTimer = 90; // 1.5 seconds at 60fps
+    this.comboTimer = 75; // 1.25 seconds combo retention window
     if (this.comboCounter > this.maxCombo) {
       this.maxCombo = this.comboCounter;
     }
 
-    // Super meter build
-    const meterGain = attackType === 'super' ? 0 : attackType === 'kick' ? 10 : 7;
+    // Award Super meter based on move definition
+    const move = attackType ? getCharacterMove(this.character, attackType as AttackKind) : null;
+    const meterGain = move ? move.meterGain : 7;
     this.superMeter = Math.min(100, this.superMeter + meterGain);
   }
 
+  private initiateAttack(type: AttackKind) {
+    const move = getCharacterMove(this.character, type);
+    if (type === 'super') {
+      if (this.superMeter < move.meterCost) return false;
+      this.superMeter -= move.meterCost;
+      this.superVariant = this.nextSuperVariant;
+      this.nextSuperVariant = this.nextSuperVariant === 0 ? 1 : 0;
+      gameAudio.playSuperSurge();
+    } else {
+      gameAudio.playWhoosh();
+    }
+
+    this.state = type;
+    this.stateFrame = 1; // Start on frame 1 of the attack
+    this.currentAttackType = type;
+    this.currentMove = move;
+    this.attackHit = false;
+    this.attackPhase = 'startup';
+    this.vx = type === 'punch' ? this.facing * 1.4 : type === 'kick' ? this.facing * 2.0 : 0;
+    return true;
+  }
+
   public update(input: FighterInput, opponentX: number, arenaWidth: number) {
+    // 1. Process Hitstop Freeze: both fighters pause briefly on impact
+    if (this.hitstopFrames > 0) {
+      this.hitstopFrames--;
+      return;
+    }
+
     this.stateFrame++;
 
-    // Update combo decay
+    if (this.invincibleFrames > 0) {
+      this.invincibleFrames--;
+    }
+
+    // Decrement anti-mash lockout delay when in neutral
+    if (this.attackCooldown > 0 && !this.isAttacking()) {
+      this.attackCooldown--;
+    }
+
+    // Combo Timer Decay
     if (this.comboTimer > 0) {
       this.comboTimer--;
       if (this.comboTimer <= 0) {
@@ -250,67 +350,60 @@ export class Fighter {
       }
     }
 
-    // Auto-face opponent unless locked in active attack/hitstun/knockdown
-    const isLocked = ['punch', 'kick', 'grab', 'super', 'hitstun', 'knockdown', 'victory', 'defeat'].includes(this.state);
-    if (!isLocked && this.isGrounded) {
+    // Auto-face opponent when in neutral states
+    const lockedFacing = this.isAttacking() || ['hitstun', 'blockstun', 'knockdown', 'getting_up', 'victory', 'defeat'].includes(this.state);
+    if (!lockedFacing && this.isGrounded) {
       this.facing = this.x < opponentX ? 1 : -1;
     }
 
-    // Check blocking intent (holding back relative to opponent)
+    // Guard intent (holding backward away from opponent or explicit block button)
     const holdingBack = (this.facing === 1 && input.moveLeft) || (this.facing === -1 && input.moveRight) || input.block;
-    this.isBlocking = holdingBack && this.isGrounded && !['punch', 'kick', 'grab', 'super'].includes(this.state);
+    this.isBlocking = holdingBack && this.canBlock();
 
-    // Speed multiplier from stats
+    // Input buffer expiration
+    if (this.inputBuffer) {
+      this.inputBuffer.framesRemaining--;
+      if (this.inputBuffer.framesRemaining <= 0) {
+        this.inputBuffer = null;
+      }
+    }
+
+    // Read and buffer momentary attack inputs (only when not locked out by anti-mash delay)
+    if (this.attackCooldown <= 0) {
+      if (input.superAttack && this.superMeter >= 100) {
+        this.inputBuffer = { attack: 'super', framesRemaining: 5 };
+      } else if (input.grab) {
+        this.inputBuffer = { attack: 'grab', framesRemaining: 5 };
+      } else if (input.kick) {
+        this.inputBuffer = { attack: 'kick', framesRemaining: 5 };
+      } else if (input.punch) {
+        this.inputBuffer = { attack: 'punch', framesRemaining: 5 };
+      }
+    } else {
+      this.inputBuffer = null;
+    }
+
+    // Speed multiplier from character stats
     const speedMult = this.character.stats.speed / 100;
     const walkSpeed = 4.2 * speedMult;
+    const attackMoveDirection = Number(input.moveRight) - Number(input.moveLeft);
+    const attackMoveSpeed = walkSpeed * 0.55;
 
-    // State Machine
+    // 2. STATE MACHINE
     switch (this.state) {
       case 'idle':
       case 'walk_fwd':
       case 'walk_back':
       case 'block':
       case 'crouch': {
-        // Attack inputs take highest priority
-        if (input.superAttack && this.superMeter >= 100 && this.isGrounded) {
-          this.state = 'super';
-          this.stateFrame = 0;
-          this.attackHit = false;
-          this.currentAttackType = 'super';
-          this.superMeter = 0;
-          this.vx = 0;
-          gameAudio.playSuperSurge();
-          break;
-        }
-
-        if (input.grab && this.isGrounded) {
-          this.state = 'grab';
-          this.stateFrame = 0;
-          this.attackHit = false;
-          this.currentAttackType = 'grab';
-          this.vx = 0;
-          gameAudio.playWhoosh();
-          break;
-        }
-
-        if (input.punch && this.isGrounded) {
-          this.state = 'punch';
-          this.stateFrame = 0;
-          this.attackHit = false;
-          this.currentAttackType = 'punch';
-          this.vx = this.facing * 1.5; // slight forward step
-          gameAudio.playWhoosh();
-          break;
-        }
-
-        if (input.kick && this.isGrounded) {
-          this.state = 'kick';
-          this.stateFrame = 0;
-          this.attackHit = false;
-          this.currentAttackType = 'kick';
-          this.vx = this.facing * 2.2; // forward advance
-          gameAudio.playWhoosh();
-          break;
+        // Execute buffered attack if available
+        if (this.inputBuffer && this.isGrounded) {
+          const buffered = this.inputBuffer.attack;
+          this.inputBuffer = null;
+          if (this.initiateAttack(buffered)) {
+            if (attackMoveDirection !== 0) this.vx = attackMoveDirection * attackMoveSpeed;
+            break;
+          }
         }
 
         // Jump
@@ -327,19 +420,22 @@ export class Fighter {
 
         // Crouch
         if (input.crouch && this.isGrounded) {
+          if (this.state !== 'crouch') this.stateFrame = 0;
           this.state = 'crouch';
           this.vx = 0;
           break;
         }
 
         // Block
-        if (this.isBlocking) {
+        // Holding away guards while walking backwards. The dedicated block
+        // button still plants the fighter in place.
+        if (this.isBlocking && input.block) {
           this.state = 'block';
           this.vx = 0;
           break;
         }
 
-        // Movement
+        // Horizontal Movement
         if (input.moveRight) {
           this.vx = walkSpeed;
           this.state = this.facing === 1 ? 'walk_fwd' : 'walk_back';
@@ -354,7 +450,6 @@ export class Fighter {
       }
 
       case 'jump': {
-        // Air physics
         if (this.isGrounded) {
           this.state = 'idle';
           this.stateFrame = 0;
@@ -362,42 +457,57 @@ export class Fighter {
         break;
       }
 
-      case 'punch': {
-        // Recovery after 14 frames
-        if (this.stateFrame >= 14) {
-          this.state = 'idle';
-          this.stateFrame = 0;
-          this.currentAttackType = null;
-        }
-        break;
-      }
-
-      case 'kick': {
-        // Recovery after 20 frames
-        if (this.stateFrame >= 20) {
-          this.state = 'idle';
-          this.stateFrame = 0;
-          this.currentAttackType = null;
-        }
-        break;
-      }
-
-      case 'grab': {
-        // Recovery after 18 frames
-        if (this.stateFrame >= 18) {
-          this.state = 'idle';
-          this.stateFrame = 0;
-          this.currentAttackType = null;
-        }
-        break;
-      }
-
+      // 3. ATTACK STATES (Startup -> Active -> Recovery)
+      case 'punch':
+      case 'kick':
+      case 'grab':
       case 'super': {
-        // Recovery after 34 frames
-        if (this.stateFrame >= 34) {
+        const move = this.currentMove || getCharacterMove(this.character, this.state);
+        const startup = move.startupFrames;
+        const activeEnd = startup + move.activeFrames;
+        const total = move.totalFrames;
+
+        // Keep deliberate footwork available during a committed strike. The
+        // fighter cannot turn around or bypass startup, contact, or recovery.
+        if (this.isGrounded && attackMoveDirection !== 0) {
+          this.vx = attackMoveDirection * attackMoveSpeed;
+        }
+
+        // Check Target Combo Cancel Window (e.g. punch -> kick on hit)
+        if (this.attackHit && move.cancelWindow && this.stateFrame >= move.cancelWindow.start && this.stateFrame <= move.cancelWindow.end) {
+          if (this.inputBuffer && this.inputBuffer.attack === 'kick') {
+            const buffered = this.inputBuffer.attack;
+            this.inputBuffer = null;
+            this.initiateAttack(buffered);
+            break;
+          }
+        }
+
+        // Advance Attack Phases deterministically
+        if (this.stateFrame <= startup) {
+          this.attackPhase = 'startup';
+        } else if (this.stateFrame <= activeEnd) {
+          this.attackPhase = 'active';
+        } else if (this.stateFrame <= total) {
+          this.attackPhase = 'recovery';
+        } else {
+          // Attack Complete -> Return cleanly to neutral Idle with anti-mash lockout delay
           this.state = 'idle';
           this.stateFrame = 0;
+          this.attackPhase = 'none';
           this.currentAttackType = null;
+          this.currentMove = null;
+          this.attackHit = false;
+          // Set anti-mash lockout delay (10 frames for punch, 14 frames for kick, 18 frames for grab/super)
+          this.attackCooldown = move.type === 'punch' ? 10 : move.type === 'kick' ? 14 : 18;
+        }
+        break;
+      }
+
+      case 'blockstun': {
+        if (this.stateFrame >= this.blockstunFrames) {
+          this.state = this.isBlocking ? 'block' : 'idle';
+          this.stateFrame = 0;
         }
         break;
       }
@@ -411,12 +521,23 @@ export class Fighter {
       }
 
       case 'knockdown': {
-        // Recover after hitting ground and waiting
-        if (this.isGrounded && this.stateFrame >= 42) {
+        // Ground impact & stay down for 32 frames
+        if (this.isGrounded && this.stateFrame >= 32) {
           if (this.health > 0) {
-            this.state = 'idle';
+            this.state = 'getting_up';
             this.stateFrame = 0;
+            this.invincibleFrames = 18; // Invincible while getting up
           }
+        }
+        break;
+      }
+
+      case 'getting_up': {
+        // Stand up animation transition (18 frames) -> return to idle with 6 bonus invincibility frames
+        if (this.stateFrame >= 18) {
+          this.state = 'idle';
+          this.stateFrame = 0;
+          this.invincibleFrames = 6; // Wakeup spacing buffer
         }
         break;
       }
@@ -428,21 +549,18 @@ export class Fighter {
       }
     }
 
-    // Apply Gravity
+    // 4. Gravity & Ground Physics
     if (!this.isGrounded) {
-      this.vy += 0.72; // gravity constant
+      this.vy += 0.72; // Gravity
     }
 
-    // Apply Velocities
     this.x += this.vx;
     this.y += this.vy;
 
-    // Friction on ground
     if (this.isGrounded) {
-      this.vx *= 0.82;
+      this.vx *= 0.82; // Ground friction
     }
 
-    // Ground Collision
     if (this.y >= this.groundY) {
       this.y = this.groundY;
       this.vy = 0;
@@ -464,33 +582,32 @@ export class Fighter {
   public render(ctx: CanvasRenderingContext2D) {
     ctx.save();
 
-    // 1. Shadow beneath fighter
+    // Shadow
     const shadowWidth = this.width * (this.isGrounded ? 1.4 : 0.8);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
     ctx.beginPath();
     ctx.ellipse(this.x, this.groundY + 4, shadowWidth / 2, 8, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 2. Draw Fighter Silhouette & Arcade Costume
+    // Silhouette & Costume
     ctx.translate(this.x, this.y);
     ctx.scale(this.facing, 1);
 
     const isCrouching = this.state === 'crouch';
     const isKnockdown = this.state === 'knockdown';
-    const isHitstun = this.state === 'hitstun';
-    const isAttacking = ['punch', 'kick', 'grab', 'super'].includes(this.state);
+    const isGettingUp = this.state === 'getting_up';
+    const isHitstun = this.state === 'hitstun' || this.state === 'blockstun';
 
     if (isKnockdown) {
-      // Fallen on ground pose
       ctx.rotate(-Math.PI / 2.2);
+    } else if (isGettingUp) {
+      ctx.rotate(-Math.PI / 4 * (1 - this.stateFrame / 18));
     }
 
-    // Visual flicker on hitstun
     if (isHitstun && Math.floor(this.stateFrame / 2) % 2 === 0) {
       ctx.globalAlpha = 0.6;
     }
 
-    // Super glow aura
     if (this.state === 'super') {
       ctx.shadowColor = this.character.themeColor;
       ctx.shadowBlur = 18;
@@ -500,87 +617,50 @@ export class Fighter {
 
     // Legs / Pants
     ctx.fillStyle = '#1e293b';
-    if (this.character.id === 'claude') ctx.fillStyle = '#15803d'; // Green cargo pants
-    if (this.character.id === 'carl-johnson') ctx.fillStyle = '#1d4ed8'; // Blue denim
-    if (this.character.id === 'tommy-vercetti') ctx.fillStyle = '#0284c7'; // Blue jeans
+    if (this.character.id === 'claude') ctx.fillStyle = '#15803d';
+    if (this.character.id === 'carl-johnson') ctx.fillStyle = '#1d4ed8';
+    if (this.character.id === 'tommy-vercetti') ctx.fillStyle = '#0284c7';
 
     if (isCrouching) {
       ctx.fillRect(-16, -30, 32, 28);
-    } else if (this.state === 'kick' && this.stateFrame >= 5 && this.stateFrame <= 14) {
-      // Extended kick leg
-      ctx.fillRect(-10, -50, 18, 50); // support leg
+    } else if (this.state === 'kick' && this.attackPhase === 'active') {
+      ctx.fillRect(-10, -50, 18, 50);
       ctx.save();
       ctx.fillStyle = this.character.accentColor;
-      ctx.fillRect(4, -45, 52, 18); // kicking leg extending forward
+      ctx.fillRect(8, -48, 54, 18);
       ctx.restore();
     } else {
-      // Standing legs
-      ctx.fillRect(-14, -55, 12, 55);
-      ctx.fillRect(2, -55, 12, 55);
+      ctx.fillRect(-14, -50, 12, 50);
+      ctx.fillRect(2, -50, 12, 50);
     }
 
     // Torso / Shirt
     ctx.fillStyle = this.character.themeColor;
-    const torsoY = isCrouching ? -62 : -88;
-    const torsoH = isCrouching ? 34 : 40;
-    ctx.beginPath();
-    ctx.roundRect(-16, torsoY, 32, torsoH, 6);
-    ctx.fill();
-
-    // Torso accent (e.g. Hawaiian pattern, stripes, collar)
-    ctx.fillStyle = this.character.accentColor;
-    ctx.fillRect(-3, torsoY + 4, 6, torsoH - 8);
+    const torsoY = isCrouching ? -currentHeight + 10 : -currentHeight + 35;
+    const torsoH = isCrouching ? 28 : 42;
+    ctx.fillRect(-16, torsoY, 32, torsoH);
 
     // Head
-    const headY = isCrouching ? -82 : -108;
-    ctx.fillStyle = '#f5d0b0'; // skin tone
+    ctx.fillStyle = this.character.id === 'carl-johnson' ? '#8d5524' : '#f5d0b0';
+    const headY = isCrouching ? torsoY - 22 : -currentHeight + 10;
     ctx.beginPath();
-    ctx.arc(0, headY, 13, 0, Math.PI * 2);
+    ctx.arc(0, headY, 14, 0, Math.PI * 2);
     ctx.fill();
 
-    // Hair / Hat / Accessories
-    ctx.fillStyle = '#1c1917';
-    if (this.character.id === 'tommy-vercetti') ctx.fillStyle = '#292524';
-    if (this.character.id === 'claude') ctx.fillStyle = '#18181b';
-    if (this.character.id === 'trevor-philips') ctx.fillStyle = '#78716c';
-    if (this.character.id === 'lucia-caminos') ctx.fillStyle = '#451a03';
-
-    ctx.beginPath();
-    ctx.arc(0, headY - 4, 13, Math.PI, Math.PI * 2);
-    ctx.fill();
-
-    // Arms & Attacks
-    ctx.fillStyle = '#f5d0b0';
-
-    if (this.state === 'punch' && this.stateFrame >= 3 && this.stateFrame <= 10) {
-      // Extended punch fist
-      ctx.fillRect(-6, torsoY + 8, 48, 14);
-      ctx.fillStyle = this.character.accentColor;
+    // Arms / Attack Pose
+    ctx.fillStyle = this.character.accentColor;
+    if (this.state === 'punch' && this.attackPhase === 'active') {
+      ctx.fillRect(8, torsoY + 6, 44, 14); // Extended punch arm
+    } else if (this.state === 'block' || this.state === 'blockstun') {
+      ctx.fillRect(4, torsoY + 4, 14, 30); // Raised guard arms
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.arc(42, torsoY + 15, 8, 0, Math.PI * 2);
-      ctx.fill();
-    } else if (this.state === 'block') {
-      // Guard stance with crossed arms
-      ctx.fillStyle = '#06b6d4';
-      ctx.fillRect(4, torsoY + 4, 12, 28);
-      ctx.fillRect(10, torsoY + 12, 10, 18);
-    } else if (this.state === 'super') {
-      // Signature weapon / energy blast
-      ctx.fillStyle = this.character.themeColor;
-      ctx.fillRect(8, torsoY + 2, 70, 24);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(16, torsoY + 8, 55, 12);
+      ctx.arc(14, torsoY + 16, 22, -Math.PI / 2, Math.PI / 2);
+      ctx.stroke();
     } else {
-      // Relaxed idle arms
-      ctx.fillRect(-12, torsoY + 6, 8, 28);
-      ctx.fillRect(4, torsoY + 6, 8, 28);
-    }
-
-    // Victory celebration hands up
-    if (this.state === 'victory') {
-      ctx.fillStyle = '#f5d0b0';
-      ctx.fillRect(-14, torsoY - 20, 8, 26);
-      ctx.fillRect(6, torsoY - 20, 8, 26);
+      ctx.fillRect(-18, torsoY + 4, 10, 24);
+      ctx.fillRect(8, torsoY + 4, 10, 24);
     }
 
     ctx.restore();

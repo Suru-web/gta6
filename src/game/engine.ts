@@ -2,10 +2,11 @@ import { Character, Arena, Difficulty } from '@/types/game';
 import { Fighter, FighterInput } from './fighter';
 import { CPUController } from './ai';
 import { ParticleSystem } from './particles';
-import { RoundState, Rect } from './types';
+import { RoundState, Rect, CombatTelemetry } from './types';
 import { gameAudio } from './audio';
 
 export interface GameEngineCallbacks {
+  render3DMode?: boolean;
   onRoundChange?: (roundState: RoundState) => void;
   onHealthChange?: (playerHp: number, cpuHp: number, playerSuper: number, cpuSuper: number) => void;
   onMatchFinish?: (results: {
@@ -47,6 +48,23 @@ export class GameEngine {
     bannerScale: 1.2,
   };
 
+  public telemetry: CombatTelemetry = {
+    attacksInitiatedPlayer: 0,
+    attacksInitiatedCpu: 0,
+    attacksLandedPlayer: 0,
+    attacksLandedCpu: 0,
+    attacksWhiffedPlayer: 0,
+    attacksWhiffedCpu: 0,
+    attacksBlockedPlayer: 0,
+    attacksBlockedCpu: 0,
+    punishesPlayer: 0,
+    punishesCpu: 0,
+    combosExecutedPlayer: 0,
+    combosExecutedCpu: 0,
+    neutralFrames: 0,
+    cpuAttackCooldownGaps: [],
+  };
+
   private callbacks: GameEngineCallbacks;
   private animationFrameId: number | null = null;
   private isPaused: boolean = false;
@@ -54,8 +72,16 @@ export class GameEngine {
 
   private phaseTimer: number = 0;
   private frameCount: number = 0;
+  private lastFrameTime: number | null = null;
+  private accumulator: number = 0;
+  public simulationTime: number = 0;
+  private projectImpact: ((x: number, y: number) => { x: number; y: number }) | null = null;
   private matchStartTimestamp: number = 0;
   private cameraShake: number = 0;
+
+  private lastPlayerAttacking: boolean = false;
+  private lastCpuAttacking: boolean = false;
+  private pendingPlayerAttack: 'punch' | 'kick' | 'grab' | 'superAttack' | null = null;
 
   public playerInput: FighterInput = {
     moveLeft: false,
@@ -99,6 +125,16 @@ export class GameEngine {
 
   public setPaused(paused: boolean) {
     this.isPaused = paused;
+    this.lastFrameTime = null;
+    this.accumulator = 0;
+  }
+
+  public setImpactProjection(project: ((x: number, y: number) => { x: number; y: number }) | null) {
+    this.projectImpact = project;
+  }
+
+  public queuePlayerAttack(attack: 'punch' | 'kick' | 'grab' | 'superAttack') {
+    if (!this.isPaused && this.roundState.phase === 'fight') this.pendingPlayerAttack = attack;
   }
 
   public destroy() {
@@ -111,29 +147,40 @@ export class GameEngine {
 
   private startRound(roundNum: number) {
     this.roundState.currentRound = roundNum;
-    this.roundState.roundTimer = 60;
+    this.roundState.roundTimer = this.difficulty === 'practice' ? 99 : 60;
     this.roundState.phase = 'intro';
-    this.roundState.bannerText = roundNum === 3 ? 'FINAL ROUND' : `ROUND ${roundNum}`;
-    this.roundState.bannerSubtext = 'FIGHT!';
+    this.roundState.bannerText = this.difficulty === 'practice' ? 'PRACTICE MODE' : roundNum === 3 ? 'FINAL ROUND' : `ROUND ${roundNum}`;
+    this.roundState.bannerSubtext = this.difficulty === 'practice' ? 'FREE TRAINING' : 'FIGHT!';
     this.roundState.bannerAlpha = 1;
     this.roundState.bannerScale = 1.3;
     this.phaseTimer = 0;
 
     this.player.resetPosition(220);
     this.cpu.resetPosition(580);
+    this.cpuAI.resetState();
     this.particles.clear();
 
     gameAudio.playRoundStart();
     this.callbacks.onRoundChange?.(this.roundState);
   }
 
-  private loop() {
+  private loop(timestamp: number) {
     if (this.isDestroyed) return;
 
     if (!this.isPaused) {
-      this.update();
+      if (this.lastFrameTime !== null) {
+        // Limit catch-up after a background tab or a long stall.
+        this.accumulator += Math.min(timestamp - this.lastFrameTime, 100);
+        const step = 1000 / 60;
+        while (this.accumulator >= step) {
+          this.update();
+          this.simulationTime += 1 / 60;
+          this.accumulator -= step;
+        }
+      }
       this.render();
     }
+    this.lastFrameTime = timestamp;
 
     this.animationFrameId = requestAnimationFrame(this.loop);
   }
@@ -151,9 +198,9 @@ export class GameEngine {
     // 1. INTRO PHASE (Round Announce)
     if (this.roundState.phase === 'intro') {
       if (this.phaseTimer < 45) {
-        this.roundState.bannerText = this.roundState.currentRound === 3 ? 'FINAL ROUND' : `ROUND ${this.roundState.currentRound}`;
+        this.roundState.bannerText = this.difficulty === 'practice' ? 'PRACTICE MODE' : this.roundState.currentRound === 3 ? 'FINAL ROUND' : `ROUND ${this.roundState.currentRound}`;
       } else {
-        this.roundState.bannerText = 'FIGHT!';
+        this.roundState.bannerText = this.difficulty === 'practice' ? 'FREE TRAINING' : 'FIGHT!';
       }
 
       this.roundState.bannerScale = Math.max(1, this.roundState.bannerScale - 0.008);
@@ -167,8 +214,8 @@ export class GameEngine {
 
     // 2. ACTIVE FIGHT PHASE
     if (this.roundState.phase === 'fight') {
-      // Round Timer (decrement roughly once per second at 60fps)
-      if (this.frameCount % 60 === 0 && this.roundState.roundTimer > 0) {
+      // Round Timer (decrement roughly once per second at 60fps, disabled in Practice Mode)
+      if (this.difficulty !== 'practice' && this.frameCount % 60 === 0 && this.roundState.roundTimer > 0) {
         this.roundState.roundTimer--;
         this.callbacks.onRoundChange?.(this.roundState);
 
@@ -178,18 +225,49 @@ export class GameEngine {
         }
       }
 
+      // Track attack initiation telemetry
+      const playerIsAttacking = this.player.isAttacking();
+      if (!this.lastPlayerAttacking && playerIsAttacking) {
+        this.telemetry.attacksInitiatedPlayer++;
+      } else if (this.lastPlayerAttacking && !playerIsAttacking && !this.player.attackHit) {
+        this.telemetry.attacksWhiffedPlayer++;
+      }
+      this.lastPlayerAttacking = playerIsAttacking;
+
+      const cpuIsAttacking = this.cpu.isAttacking();
+      if (!this.lastCpuAttacking && cpuIsAttacking) {
+        this.telemetry.attacksInitiatedCpu++;
+      } else if (this.lastCpuAttacking && !cpuIsAttacking && !this.cpu.attackHit) {
+        this.telemetry.attacksWhiffedCpu++;
+      }
+      this.lastCpuAttacking = cpuIsAttacking;
+
+      if (!playerIsAttacking && !cpuIsAttacking) {
+        this.telemetry.neutralFrames++;
+      }
+
       // CPU AI Decisions
       const cpuInput = this.cpuAI.update(this.cpu, this.player);
 
       // Update Fighters
-      this.player.update(this.playerInput, this.cpu.x, this.width);
+      const playerInput = this.pendingPlayerAttack
+        ? { ...this.playerInput, [this.pendingPlayerAttack]: true }
+        : this.playerInput;
+      this.pendingPlayerAttack = null;
+      this.player.update(playerInput, this.cpu.x, this.width);
       this.cpu.update(cpuInput, this.player.x, this.width);
+
+      // Mutual Physical Body Pushbox Spacing (Prevents overlapping models)
+      this.applyPushboxPhysics();
 
       // Check Combat Collisions
       this.checkCombatCollisions();
 
-      // Check Knockout Condition
-      if (this.player.health <= 0 || this.cpu.health <= 0) {
+      // Check Knockout Condition (In Practice mode, CPU has infinite health)
+      if (this.difficulty === 'practice') {
+        this.cpu.health = this.cpu.maxHealth;
+        this.player.superMeter = 100;
+      } else if (this.player.health <= 0 || this.cpu.health <= 0) {
         this.roundState.phase = 'ko';
         this.phaseTimer = 0;
         this.roundState.bannerText = 'KNOCKOUT!';
@@ -209,7 +287,6 @@ export class GameEngine {
 
     // 3. KNOCKOUT PHASE (Dramatic Slowdown & Winner Freeze)
     if (this.roundState.phase === 'ko') {
-      // Keep running knockdown physics
       this.player.update(this.playerInput, this.cpu.x, this.width);
       this.cpu.update(this.playerInput, this.player.x, this.width);
 
@@ -221,7 +298,6 @@ export class GameEngine {
     // 4. ROUND END / TRANSITION
     if (this.roundState.phase === 'round_end') {
       if (this.phaseTimer >= 110) {
-        // Next round or match end
         if (this.roundState.playerRoundsWon >= 2 || this.roundState.cpuRoundsWon >= 2) {
           this.handleMatchComplete();
         } else {
@@ -232,6 +308,43 @@ export class GameEngine {
 
     // Update Particles and Popups
     this.particles.update();
+  }
+
+  /**
+   * Applies mutual pushbox separation to prevent fighters from phasing through each other
+   */
+  private applyPushboxPhysics() {
+    if (this.player.isGrounded && this.cpu.isGrounded) {
+      const dx = this.cpu.x - this.player.x;
+      const dist = Math.abs(dx);
+      const minDistance = 44; // Minimum pushbox spacing
+
+      if (dist < minDistance) {
+        const overlap = minDistance - dist;
+        const sign = dx >= 0 ? 1 : -1;
+
+        const minX = 40;
+        const maxX = this.width - 40;
+
+        const playerAtLeftWall = this.player.x <= minX + 4;
+        const cpuAtRightWall = this.cpu.x >= maxX - 4;
+        const cpuAtLeftWall = this.cpu.x <= minX + 4;
+        const playerAtRightWall = this.player.x >= maxX - 4;
+
+        if (playerAtLeftWall) {
+          this.cpu.x = Math.min(maxX, this.cpu.x + overlap);
+        } else if (cpuAtRightWall) {
+          this.player.x = Math.max(minX, this.player.x - overlap);
+        } else if (cpuAtLeftWall) {
+          this.player.x = Math.min(maxX, this.player.x + overlap);
+        } else if (playerAtRightWall) {
+          this.cpu.x = Math.max(minX, this.cpu.x - overlap);
+        } else {
+          this.player.x -= (overlap / 2) * sign;
+          this.cpu.x += (overlap / 2) * sign;
+        }
+      }
+    }
   }
 
   private checkCombatCollisions() {
@@ -248,23 +361,31 @@ export class GameEngine {
           playerHitbox.type === 'super'
         );
 
-        this.player.registerHitLanded(result.actualDamage, playerHitbox.type);
+        if (result.hit) {
+          this.player.registerHitLanded(result.actualDamage, playerHitbox.type);
+          
+          // Apply synchronized hitstop freeze to both fighters
+          this.player.hitstopFrames = result.hitstopFrames;
+          this.cpu.hitstopFrames = result.hitstopFrames;
 
-        const sparkX = fromDirection === 1 ? playerHitbox.x + playerHitbox.width : playerHitbox.x;
-        const sparkY = playerHitbox.y + playerHitbox.height / 2;
+          const impact = this.impactPoint(playerHitbox, cpuHurtbox);
+          const sparkX = impact.x;
+          const sparkY = impact.y;
 
-        if (result.blocked) {
-          this.particles.emitBlockSparks(sparkX, sparkY);
-          this.particles.addPopup(sparkX, sparkY - 20, 'BLOCKED!', '#06b6d4');
-        } else {
-          this.particles.emitHitSparks(sparkX, sparkY, this.player.character.themeColor, 18);
-          this.particles.addPopup(
-            sparkX,
-            sparkY - 20,
-            `-${result.actualDamage}`,
-            this.player.character.themeColor
-          );
-          this.cameraShake = playerHitbox.type === 'super' ? 14 : 6;
+          if (result.blocked) {
+            this.particles.emitBlockSparks(sparkX, sparkY);
+            this.particles.addPopup(sparkX, sparkY - 20, 'BLOCKED!', '#06b6d4');
+            this.telemetry.attacksBlockedCpu++;
+          } else {
+            this.particles.emitHitSparks(sparkX, sparkY, this.player.character.themeColor, 18);
+            const label = result.isCounterHit ? `COUNTER! -${result.actualDamage}` : `-${result.actualDamage}`;
+            this.particles.addPopup(sparkX, sparkY - 20, label, this.player.character.themeColor);
+            this.cameraShake = playerHitbox.type === 'super' ? 14 : result.isCounterHit ? 9 : 6;
+            this.telemetry.attacksLandedPlayer++;
+            if (result.isCounterHit) {
+              this.telemetry.punishesPlayer++;
+            }
+          }
         }
       }
     }
@@ -282,23 +403,31 @@ export class GameEngine {
           cpuHitbox.type === 'super'
         );
 
-        this.cpu.registerHitLanded(result.actualDamage, cpuHitbox.type);
+        if (result.hit) {
+          this.cpu.registerHitLanded(result.actualDamage, cpuHitbox.type);
 
-        const sparkX = fromDirection === 1 ? cpuHitbox.x + cpuHitbox.width : cpuHitbox.x;
-        const sparkY = cpuHitbox.y + cpuHitbox.height / 2;
+          // Apply synchronized hitstop freeze to both fighters
+          this.player.hitstopFrames = result.hitstopFrames;
+          this.cpu.hitstopFrames = result.hitstopFrames;
 
-        if (result.blocked) {
-          this.particles.emitBlockSparks(sparkX, sparkY);
-          this.particles.addPopup(sparkX, sparkY - 20, 'BLOCKED!', '#06b6d4');
-        } else {
-          this.particles.emitHitSparks(sparkX, sparkY, this.cpu.character.themeColor, 18);
-          this.particles.addPopup(
-            sparkX,
-            sparkY - 20,
-            `-${result.actualDamage}`,
-            this.cpu.character.themeColor
-          );
-          this.cameraShake = cpuHitbox.type === 'super' ? 14 : 6;
+          const impact = this.impactPoint(cpuHitbox, playerHurtbox);
+          const sparkX = impact.x;
+          const sparkY = impact.y;
+
+          if (result.blocked) {
+            this.particles.emitBlockSparks(sparkX, sparkY);
+            this.particles.addPopup(sparkX, sparkY - 20, 'BLOCKED!', '#06b6d4');
+            this.telemetry.attacksBlockedPlayer++;
+          } else {
+            this.particles.emitHitSparks(sparkX, sparkY, this.cpu.character.themeColor, 18);
+            const label = result.isCounterHit ? `COUNTER! -${result.actualDamage}` : `-${result.actualDamage}`;
+            this.particles.addPopup(sparkX, sparkY - 20, label, this.cpu.character.themeColor);
+            this.cameraShake = cpuHitbox.type === 'super' ? 14 : result.isCounterHit ? 9 : 6;
+            this.telemetry.attacksLandedCpu++;
+            if (result.isCounterHit) {
+              this.telemetry.punishesCpu++;
+            }
+          }
         }
       }
     }
@@ -376,6 +505,12 @@ export class GameEngine {
     );
   }
 
+  private impactPoint(hitbox: Rect, hurtbox: Rect): { x: number; y: number } {
+    const x = (Math.max(hitbox.x, hurtbox.x) + Math.min(hitbox.x + hitbox.width, hurtbox.x + hurtbox.width)) / 2;
+    const y = (Math.max(hitbox.y, hurtbox.y) + Math.min(hitbox.y + hitbox.height, hurtbox.y + hurtbox.height)) / 2;
+    return this.projectImpact?.(x, y) ?? { x, y };
+  }
+
   private render() {
     const ctx = this.ctx;
     ctx.save();
@@ -387,12 +522,17 @@ export class GameEngine {
       ctx.translate(shakeX, shakeY);
     }
 
-    // 1. Draw Parallax Arena Background
-    this.renderArena(ctx);
+    if (this.callbacks.render3DMode) {
+      // Clear 2D canvas for transparent overlay over Three.js 3D viewport
+      ctx.clearRect(0, 0, this.width, this.height);
+    } else {
+      // 1. Draw Parallax Arena Background
+      this.renderArena(ctx);
 
-    // 2. Draw Fighters
-    this.player.render(ctx);
-    this.cpu.render(ctx);
+      // 2. Draw 2D Fighters
+      this.player.render(ctx);
+      this.cpu.render(ctx);
+    }
 
     // 3. Draw Particles & Damage Popups
     this.particles.render(ctx);
@@ -453,7 +593,6 @@ export class GameEngine {
     ];
     for (const b of buildings) {
       ctx.fillRect(b.x, this.groundY - b.h, b.w, b.h);
-      // Small yellow/cyan lit windows
       ctx.fillStyle = Math.random() > 0.5 ? 'rgba(253, 224, 71, 0.4)' : 'rgba(6, 182, 212, 0.4)';
       for (let wy = this.groundY - b.h + 20; wy < this.groundY - 30; wy += 25) {
         ctx.fillRect(b.x + 8, wy, 6, 8);
@@ -492,7 +631,6 @@ export class GameEngine {
   private drawPalmTree(ctx: CanvasRenderingContext2D, x: number, y: number) {
     ctx.save();
     ctx.fillStyle = '#0a0512';
-    // Trunk
     ctx.beginPath();
     ctx.moveTo(x - 5, y);
     ctx.quadraticCurveTo(x + 12, y - 80, x + 8, y - 160);
@@ -500,7 +638,6 @@ export class GameEngine {
     ctx.quadraticCurveTo(x + 20, y - 80, x + 5, y);
     ctx.fill();
 
-    // Fronds / Leaves
     const fronds = [
       { ex: x - 45, ey: y - 140 },
       { ex: x - 30, ey: y - 180 },
@@ -529,7 +666,6 @@ export class GameEngine {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // GTA Neon Shadow Glow
     ctx.shadowColor = '#fca47a';
     ctx.shadowBlur = 24;
     ctx.strokeStyle = '#000000';

@@ -16,43 +16,23 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://gta6-two-dun.vercel.app"),
-  title: "Can The Internet Buy Me GTA 6 For ₹1? 🎮💀",
-  description:
-    "Rockstar waited 12 years. My wallet has ₹0.00. Test cheat codes, hear retro sounds, and get immortalized on the live Wall of Legends.",
-  keywords: [
-    "GTA 6",
-    "GTA VI",
-    "Crowdfunding",
-    "Vice City",
-    "PS5 Pro",
-    "Gamer Fund",
-    "UPI Donation",
-    "HESOYAM",
-    "Wall of Legends",
-  ],
+  title: "GTA Legends Arena",
+  description: "Choose your fighter and settle the rivalry in GTA Legends Arena.",
+  keywords: ["GTA", "GTA Legends Arena", "fighting game", "Vice City"],
   openGraph: {
-    title: "Can The Internet Buy Me GTA 6 For ₹1? 🎮💀",
-    description:
-      "Rockstar waited 12 years. My wallet has ₹0.00. Test cheat codes, hear retro sounds, and get immortalized on the live Wall of Legends.",
+    title: "GTA Legends Arena",
+    description: "Choose your fighter and settle the rivalry in GTA Legends Arena.",
     url: "https://gta6-two-dun.vercel.app",
-    siteName: "GTA VI Vice City Fund",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Can The Internet Buy Me GTA 6 For ₹1? 🎮💀",
-      },
-    ],
+    siteName: "GTA Legends Arena",
+    images: [{ url: "/gta6-hero.jpg", width: 3840, height: 2160, alt: "GTA Legends Arena" }],
     type: "website",
     locale: "en_IN",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Can The Internet Buy Me GTA 6 For ₹1? 🎮💀",
-    description:
-      "Rockstar waited 12 years. My wallet has ₹0.00. Test cheat codes, hear retro sounds, and get immortalized on the live Wall of Legends.",
-    images: ["/og-image.png"],
+    title: "GTA Legends Arena",
+    description: "Choose your fighter and settle the rivalry in GTA Legends Arena.",
+    images: ["/gta6-hero.jpg"],
     creator: "@SurajGMeharwade",
   },
   icons: {
@@ -60,9 +40,7 @@ export const metadata: Metadata = {
       { url: "/icon.png", sizes: "256x256", type: "image/png" },
       { url: "/favicon.ico", sizes: "any" },
     ],
-    apple: [
-      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
-    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };
 

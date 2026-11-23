@@ -1,4 +1,4 @@
-export type Difficulty = 'easy' | 'normal' | 'hard';
+export type Difficulty = 'practice' | 'easy' | 'normal' | 'hard';
 
 export type ArenaId = 'vice-city' | 'los-santos' | 'liberty-city' | 'san-andreas' | 'leonida';
 

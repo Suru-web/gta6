@@ -9,13 +9,16 @@ import { DonationCard } from '@/components/DonationCard';
 import { MemeReasonsGrid } from '@/components/MemeReasonsGrid';
 import { DonorsCarousel } from '@/components/DonorsCarousel';
 import { CheatCodeBox } from '@/components/CheatCodeBox';
+import { AboutSection } from '@/components/AboutSection';
 import { PaymentModal } from '@/components/PaymentModal';
 import { ThankYouModal } from '@/components/ThankYouModal';
 import { Footer } from '@/components/Footer';
 import { Donation, SiteStats, UpiConfig } from '@/types/donation';
 import { SITE_CONFIG } from '@/config/site';
 import initialSeed from '@/data/seed-donations.json';
-import { Swords, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useSiteSettings } from '@/hooks/useSiteSettings';
 
 const defaultStats: SiteStats = {
   targetAmount: SITE_CONFIG.targetAmount,
@@ -34,6 +37,23 @@ const defaultStats: SiteStats = {
 };
 
 export default function SideQuestPage() {
+  const router = useRouter();
+  const { sideQuestVisible, settingsError } = useSiteSettings();
+
+  useEffect(() => {
+    if (sideQuestVisible === false) router.replace('/');
+  }, [sideQuestVisible, router]);
+
+  if (sideQuestVisible !== true) {
+    return <main className="min-h-screen bg-[#090514] p-8 text-white" role="status">
+      {sideQuestVisible === false ? 'Returning to the arena…' : settingsError ? 'Unable to load this page. Please try again.' : 'Loading…'}{' '}
+      {settingsError && <Link className="underline" href="/">Return to the arena</Link>}
+    </main>;
+  }
+  return <SideQuestContent />;
+}
+
+function SideQuestContent() {
   const [donations, setDonations] = useState<Donation[]>(initialSeed as Donation[]);
   const [stats, setStats] = useState<SiteStats>(defaultStats);
   const [upiConfig, setUpiConfig] = useState<UpiConfig>({
@@ -47,6 +67,11 @@ export default function SideQuestPage() {
   const [isThankYouOpen, setIsThankYouOpen] = useState(false);
   const [latestDonation, setLatestDonation] = useState<Donation | null>(null);
   const [totalVisits, setTotalVisits] = useState<number>(0);
+
+  useEffect(() => {
+    document.title = 'Side Quest | GTA Legends Arena';
+    return () => { document.title = 'GTA Legends Arena'; };
+  }, []);
 
   useEffect(() => {
     async function trackVisit() {
@@ -177,6 +202,7 @@ export default function SideQuestPage() {
         stats={stats}
         totalVisits={totalVisits}
         onScrollToLegends={() => scrollTo('hall-of-fame')}
+        onScrollToAbout={() => scrollTo('about-section')}
       />
 
       <TickerMarquee donations={donations} />
@@ -201,6 +227,8 @@ export default function SideQuestPage() {
         <DonorsCarousel donations={donations} />
 
         <CheatCodeBox />
+
+        <AboutSection />
       </main>
 
       <Footer onScrollToTop={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />

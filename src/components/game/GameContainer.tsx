@@ -10,13 +10,14 @@ import { FighterInput } from '@/game/fighter';
 import { gameAudio } from '@/game/audio';
 import { GameHUD } from './GameHUD';
 import { MobileControls } from './MobileControls';
-import { CharacterSelect } from './CharacterSelect';
+import { CharacterSelect3D } from './CharacterSelect3D';
+import { ArenaCanvas3D } from '@/game/three/ArenaCanvas3D';
 import { MatchResultModal } from './MatchResultModal';
-import { Swords, Play, Trophy, Users, Shield, Zap, Sparkles, ChevronRight, Pause, RotateCcw } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 
 interface GameContainerProps {
-  onOpenSideQuest: () => void;
+  onOpenSideQuest?: () => void;
   onScrollToLeaderboard: () => void;
 }
 
@@ -53,8 +54,9 @@ export const GameContainer: React.FC<GameContainerProps> = ({
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
   // Match Result & Tokens
-  const [matchToken, setMatchToken] = useState<string>('');
-  const [matchId, setMatchId] = useState<string>('');
+  const matchCredentials = useRef<{ token: string; id: string } | null>(null);
+  const matchSequence = useRef(0);
+  const [matchRevision, setMatchRevision] = useState(0);
   const [matchResult, setMatchResult] = useState<{
     playerWon: boolean;
     roundsWonPlayer: number;
@@ -67,6 +69,7 @@ export const GameContainer: React.FC<GameContainerProps> = ({
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const engineRef = useRef<GameEngine | null>(null);
+  const [engineInstance, setEngineInstance] = useState<GameEngine | null>(null);
 
   // Keyboard input state
   const keysDown = useRef<Record<string, boolean>>({});
@@ -80,9 +83,9 @@ export const GameContainer: React.FC<GameContainerProps> = ({
       jump: Boolean(k['KeyW'] || k['ArrowUp']),
       crouch: Boolean(k['KeyS'] || k['ArrowDown']),
       block: Boolean(k['ShiftLeft'] || k['KeyB']),
-      punch: Boolean(k['KeyJ']),
-      kick: Boolean(k['KeyK']),
-      grab: Boolean(k['KeyI']),
+      punch: Boolean(k['KeyJ'] || k['Mouse0']),
+      kick: Boolean(k['KeyK'] || k['Mouse2']),
+      grab: Boolean(k['KeyI'] || k['Mouse1']),
       superAttack: Boolean(k['KeyL'] || k['Space']),
     };
     engineRef.current.playerInput = input;
@@ -111,6 +114,11 @@ export const GameContainer: React.FC<GameContainerProps> = ({
         return;
       }
 
+      if (!e.repeat && screen === 'fight') {
+        const attacks: Record<string, 'punch' | 'kick' | 'grab' | 'superAttack'> = { KeyJ: 'punch', KeyK: 'kick', KeyI: 'grab', KeyL: 'superAttack', Space: 'superAttack' };
+        if (attacks[e.code]) engineRef.current?.queuePlayerAttack(attacks[e.code]);
+      }
+
       keysDown.current[e.code] = true;
       updateEngineInput();
     };
@@ -120,11 +128,20 @@ export const GameContainer: React.FC<GameContainerProps> = ({
       updateEngineInput();
     };
 
+    const handleWindowMouseUp = (e: MouseEvent) => {
+      if (e.button === 0) keysDown.current['Mouse0'] = false;
+      if (e.button === 2) keysDown.current['Mouse2'] = false;
+      if (e.button === 1) keysDown.current['Mouse1'] = false;
+      updateEngineInput();
+    };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('mouseup', handleWindowMouseUp);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('mouseup', handleWindowMouseUp);
     };
   }, [screen, updateEngineInput]);
 
@@ -135,6 +152,10 @@ export const GameContainer: React.FC<GameContainerProps> = ({
     arena: Arena;
     difficulty: Difficulty;
   }) => {
+    const sequence = ++matchSequence.current;
+    matchCredentials.current = null;
+    keysDown.current = {};
+    setMatchRevision((revision) => revision + 1);
     setPlayerChar(config.playerChar);
     setCpuChar(config.cpuChar);
     setArena(config.arena);
@@ -157,8 +178,9 @@ export const GameContainer: React.FC<GameContainerProps> = ({
       });
       const data = await res.json();
       if (data.success) {
-        setMatchToken(data.matchToken);
-        setMatchId(data.matchId);
+        if (sequence === matchSequence.current) {
+          matchCredentials.current = { token: data.matchToken, id: data.matchId };
+        }
       }
     } catch (e) {
       console.warn('Could not register match on backend:', e);
@@ -181,6 +203,7 @@ export const GameContainer: React.FC<GameContainerProps> = ({
       arena,
       difficulty,
       {
+        render3DMode: true,
         onHealthChange: (pHp, cHp, pSup, cSup) => {
           setPlayerHp(pHp);
           setCpuHp(cHp);
@@ -195,14 +218,15 @@ export const GameContainer: React.FC<GameContainerProps> = ({
           setScreen('result');
 
           // Send results to backend for global aggregation
-          if (matchToken && matchId) {
+          const credentials = matchCredentials.current;
+          if (credentials) {
             try {
               await fetch('/api/game/match/finish', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  matchToken,
-                  matchId,
+                  matchToken: credentials.token,
+                  matchId: credentials.id,
                   playerCharacterId: playerChar.id,
                   cpuCharacterId: cpuChar.id,
                   arenaId: arena.id,
@@ -225,15 +249,20 @@ export const GameContainer: React.FC<GameContainerProps> = ({
     );
 
     engineRef.current = engine;
+    setEngineInstance(engine);
 
     return () => {
       engine.destroy();
+      setEngineInstance(null);
     };
-  }, [screen, playerChar, cpuChar, arena, difficulty, matchToken, matchId]);
+  }, [screen, playerChar, cpuChar, arena, difficulty, matchRevision]);
 
   // Mobile virtual input update
   const handleMobileInput = (update: Partial<FighterInput>) => {
     if (!engineRef.current) return;
+    for (const attack of ['punch', 'kick', 'grab', 'superAttack'] as const) {
+      if (update[attack]) engineRef.current.queuePlayerAttack(attack);
+    }
     Object.assign(engineRef.current.playerInput, update);
   };
 
@@ -244,97 +273,48 @@ export const GameContainer: React.FC<GameContainerProps> = ({
       {/* 1. TITLE SCREEN: ARCADE HERO ENTRY                       */}
       {/* ======================================================== */}
       {screen === 'title' && (
-        <section className="relative px-4 pt-6 pb-12 sm:pt-10 sm:pb-16 text-center overflow-hidden">
-          <div className="max-w-4xl mx-auto relative z-10">
-            
-            {/* Arcade Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#fca47a]/30 bg-[#fca47a]/10 px-4 py-1.5 text-xs font-mono uppercase tracking-widest text-[#fca47a] mb-5 shadow-[0_0_20px_rgba(252,164,122,0.2)]">
-              <span className="w-2 h-2 rounded-full bg-[#fca47a] animate-ping" />
-              <span>GTA LEGENDS ARENA // 2026 EDITION</span>
-            </div>
-
-            {/* Main Title & Headline */}
-            <h1 className="font-bebas text-6xl sm:text-8xl md:text-9xl text-white tracking-wider leading-none mb-3 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
-              WHO IS THE STRONGEST <br />
-              <span className="bg-gradient-to-r from-[#fca47a] via-[#e86b97] to-[#06b6d4] bg-clip-text text-transparent">
-                GTA LEGEND?
-              </span>
-            </h1>
-
-            <p className="font-mono text-sm sm:text-base text-[#a19bb5] max-w-2xl mx-auto mb-8 leading-relaxed">
-              Choose your fighter. Challenge the computer. Settle the 25-year debate with authentic arcade combat. Every match updates our global community rankings.
-            </p>
-
-            {/* Big Action: START FIGHTING */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
-              <button
-                type="button"
-                onClick={() => {
-                  sounds.playCheatCode();
-                  setScreen('select');
-                }}
-                className="w-full sm:w-auto px-10 py-5 rounded-2xl bg-gradient-to-r from-[#fca47a] via-[#e86b97] to-[#9333ea] text-lg sm:text-xl font-bebas tracking-widest text-[#090514] font-black uppercase hover:brightness-110 active:scale-95 transition-all shadow-[0_0_40px_rgba(252,164,122,0.4)] flex items-center justify-center gap-3"
-              >
-                <Swords size={22} />
-                <span>START FIGHTING</span>
-                <ChevronRight size={20} />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  sounds.playClick();
-                  onScrollToLeaderboard();
-                }}
-                className="w-full sm:w-auto px-6 py-5 rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 text-white font-mono text-xs uppercase tracking-wider font-bold transition-all flex items-center justify-center gap-2"
-              >
-                <Trophy size={16} className="text-yellow-400" />
-                <span>View Global Rankings</span>
-              </button>
-            </div>
-
-            {/* Quick Feature Badges */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-3xl mx-auto font-mono text-xs">
-              <div className="rounded-2xl border border-white/5 bg-black/40 p-3 flex flex-col items-center">
-                <span className="text-2xl mb-1">🌴</span>
-                <span className="font-bold text-white">14 GTA PROTAGONISTS</span>
-                <span className="text-[10px] text-[#6c637e]">Tommy to Lucia & Jason</span>
-              </div>
-              <div className="rounded-2xl border border-white/5 bg-black/40 p-3 flex flex-col items-center">
-                <span className="text-2xl mb-1">🎮</span>
-                <span className="font-bold text-white">REAL COMBAT ENGINE</span>
-                <span className="text-[10px] text-[#6c637e]">Punches, Kicks, Supers</span>
-              </div>
-              <div className="rounded-2xl border border-white/5 bg-black/40 p-3 flex flex-col items-center">
-                <span className="text-2xl mb-1">🧠</span>
-                <span className="font-bold text-white">3 CPU DIFFICULTIES</span>
-                <span className="text-[10px] text-[#6c637e]">Easy, Normal, Hard AI</span>
-              </div>
-              <div className="rounded-2xl border border-white/5 bg-black/40 p-3 flex flex-col items-center">
-                <span className="text-2xl mb-1">🏆</span>
-                <span className="font-bold text-white">GLOBAL LEADERBOARD</span>
-                <span className="text-[10px] text-[#6c637e]">Tracked via Redis</span>
+        <section className="arena-intro mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="arena-intro-stage">
+            <div className="arena-intro-art" aria-hidden="true" />
+            <div className="arena-intro-copy">
+              <p className="arena-eyebrow"><span /> THE UNOFFICIAL GTA FIGHT CLUB</p>
+              <h1 className="arena-intro-title">Legends<br /><em>collide.</em></h1>
+              <p className="arena-intro-description">Pick your fighter, enter the arena, and settle the rivalry one round at a time.</p>
+              <div className="arena-intro-actions">
+                <button type="button" onClick={() => { sounds.playCheatCode(); setScreen('select'); }} className="arena-primary">
+                  Choose your fighter <ChevronRight size={18} />
+                </button>
+                <button type="button" onClick={() => { sounds.playClick(); onScrollToLeaderboard(); }} className="arena-secondary">
+                  View rankings <span aria-hidden="true">↗</span>
+                </button>
               </div>
             </div>
+            <div className="arena-intro-caption"><span>01 / 03</span><span>YOUR CITY. YOUR RULES.</span></div>
+          </div>
+          <div className="arena-details">
+            <div><strong>09</strong><span>Iconic fighters</span></div>
+            <div><strong>01</strong><span>Fight for the top</span></div>
+            <div><strong>∞</strong><span>Rivalries to settle</span></div>
+            <p>THE STREETS ARE CALLING <span>↗</span></p>
           </div>
         </section>
       )}
 
       {/* ======================================================== */}
-      {/* 2. CHARACTER SELECTION SCREEN                            */}
+      {/* 2. CHARACTER SELECTION SCREEN (3D FACE-OFF)              */}
       {/* ======================================================== */}
       {screen === 'select' && (
-        <CharacterSelect
+        <CharacterSelect3D
           onStartFight={handleStartFight}
           onBackToTitle={() => setScreen('title')}
         />
       )}
 
       {/* ======================================================== */}
-      {/* 3. LIVE MATCH SCREEN (CANVAS + HUD + MOBILE TOUCH)       */}
+      {/* 3. LIVE MATCH SCREEN (3D ARENA + HUD + MOBILE TOUCH)     */}
       {/* ======================================================== */}
       {screen === 'fight' && (
-        <div className="relative w-full max-w-4xl mx-auto rounded-3xl overflow-hidden border border-white/15 bg-black shadow-2xl my-2">
+        <div className="relative w-full max-w-5xl mx-auto overflow-hidden border border-white/15 bg-[#151414] my-4">
           
           {/* Top Arcade HUD */}
           <GameHUD
@@ -346,6 +326,7 @@ export const GameContainer: React.FC<GameContainerProps> = ({
             cpuSuper={cpuSuper}
             roundState={roundState}
             arena={arena}
+            difficulty={difficulty}
             onPause={() => {
               setIsPaused((p) => {
                 const next = !p;
@@ -361,17 +342,54 @@ export const GameContainer: React.FC<GameContainerProps> = ({
             }}
           />
 
-          {/* HTML5 Game Canvas (800x480 aspect ratio) */}
-          <div className="relative w-full aspect-[800/480] bg-black">
+          {/* 3D WebGL Arena Viewport + 2D Particle/Banner Overlay with Mouse Strike Support */}
+          <div
+            className="relative w-full aspect-[800/480] bg-[#151414] select-none"
+            onContextMenu={(e) => e.preventDefault()}
+            onMouseDown={(e) => {
+              if (screen !== 'fight') return;
+              if (e.button === 0) {
+                engineRef.current?.queuePlayerAttack('punch');
+                // Left Click -> Punch
+                keysDown.current['Mouse0'] = true;
+                updateEngineInput();
+              } else if (e.button === 2) {
+                engineRef.current?.queuePlayerAttack('kick');
+                // Right Click -> Kick
+                e.preventDefault();
+                keysDown.current['Mouse2'] = true;
+                updateEngineInput();
+              } else if (e.button === 1) {
+                engineRef.current?.queuePlayerAttack('grab');
+                // Middle Click -> Grab
+                e.preventDefault();
+                keysDown.current['Mouse1'] = true;
+                updateEngineInput();
+              }
+            }}
+            onMouseUp={(e) => {
+              if (e.button === 0) {
+                keysDown.current['Mouse0'] = false;
+                updateEngineInput();
+              } else if (e.button === 2) {
+                keysDown.current['Mouse2'] = false;
+                updateEngineInput();
+              } else if (e.button === 1) {
+                keysDown.current['Mouse1'] = false;
+                updateEngineInput();
+              }
+            }}
+          >
+            <ArenaCanvas3D engine={engineInstance} />
             <canvas
               ref={canvasRef}
               width={800}
               height={480}
-              className="w-full h-full object-contain block"
+              className="absolute inset-0 w-full h-full object-contain block z-10 pointer-events-none"
             />
           </div>
 
-          {/* Desktop Keyboard Controls Legend Bar */}
+          {/* Desktop Keyboard & Mouse Controls Legend Bar */}
           <div className="hidden sm:flex items-center justify-between px-4 py-2 bg-black/90 border-t border-white/10 font-mono text-[11px] text-[#a19bb5]">
             <div className="flex items-center gap-3">
               <span><strong>A/D</strong> Move</span>
@@ -380,9 +398,9 @@ export const GameContainer: React.FC<GameContainerProps> = ({
               <span><strong>HOLD BACK</strong> Block</span>
             </div>
             <div className="flex items-center gap-3">
-              <span><strong>J</strong> Punch</span>
-              <span><strong>K</strong> Kick</span>
-              <span><strong>I</strong> Grab</span>
+              <span className="text-cyan-300"><strong>LEFT CLICK / J</strong> Punch</span>
+              <span className="text-pink-300"><strong>RIGHT CLICK / K</strong> Kick</span>
+              <span className="text-emerald-300"><strong>MID CLICK / I</strong> Grab</span>
               <span className="text-yellow-300"><strong>L / SPACE</strong> Super</span>
               <span><strong>ESC</strong> Pause</span>
             </div>
@@ -399,7 +417,7 @@ export const GameContainer: React.FC<GameContainerProps> = ({
             <div className="absolute inset-0 z-40 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
               <div className="bg-[#120b22] border border-white/20 rounded-3xl p-6 text-center max-w-xs w-full shadow-2xl">
                 <h3 className="font-bebas text-3xl text-white tracking-wider mb-4">
-                  MATCH PAUSED
+                  {difficulty === 'practice' ? 'PRACTICE PAUSED' : 'MATCH PAUSED'}
                 </h3>
                 <div className="space-y-2 font-mono text-xs">
                   <button
@@ -421,7 +439,7 @@ export const GameContainer: React.FC<GameContainerProps> = ({
                     }}
                     className="w-full py-2.5 bg-white/10 text-white font-bold uppercase rounded-xl hover:bg-white/20"
                   >
-                    Restart Match
+                    {difficulty === 'practice' ? 'Reset Dummy / Restart' : 'Restart Match'}
                   </button>
                   <button
                     type="button"
@@ -431,7 +449,7 @@ export const GameContainer: React.FC<GameContainerProps> = ({
                     }}
                     className="w-full py-2.5 bg-white/5 text-[#a19bb5] hover:text-white uppercase rounded-xl"
                   >
-                    Change Characters
+                    {difficulty === 'practice' ? 'Exit Practice Mode' : 'Change Characters'}
                   </button>
                 </div>
               </div>
@@ -457,8 +475,14 @@ export const GameContainer: React.FC<GameContainerProps> = ({
           arena={arena}
           onRematch={() => handleStartFight({ playerChar, cpuChar, arena, difficulty })}
           onChooseFighter={() => setScreen('select')}
-          onViewLeaderboard={onScrollToLeaderboard}
+          onViewLeaderboard={() => {
+            setScreen('title');
+            setTimeout(() => {
+              onScrollToLeaderboard();
+            }, 60);
+          }}
           onOpenSideQuest={onOpenSideQuest}
+          onClose={() => setScreen('title')}
         />
       )}
     </div>

@@ -3,7 +3,7 @@
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { Character, Difficulty, Arena } from '@/types/game';
-import { Trophy, Skull, RotateCcw, Users, BarChart3, HeartHandshake, Zap, ChevronRight } from 'lucide-react';
+import { Trophy, Skull, RotateCcw, Users, BarChart3, HeartHandshake, X } from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 
 interface MatchResultModalProps {
@@ -20,7 +20,8 @@ interface MatchResultModalProps {
   onRematch: () => void;
   onChooseFighter: () => void;
   onViewLeaderboard: () => void;
-  onOpenSideQuest: () => void;
+  onOpenSideQuest?: () => void;
+  onClose?: () => void;
 }
 
 export const MatchResultModal: React.FC<MatchResultModalProps> = ({
@@ -38,6 +39,7 @@ export const MatchResultModal: React.FC<MatchResultModalProps> = ({
   onChooseFighter,
   onViewLeaderboard,
   onOpenSideQuest,
+  onClose,
 }) => {
   useEffect(() => {
     if (playerWon) {
@@ -51,14 +53,30 @@ export const MatchResultModal: React.FC<MatchResultModalProps> = ({
   }, [playerWon]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-in fade-in duration-300">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xl animate-in fade-in duration-300"
+      onClick={onClose}
+    >
       <div
         className={`w-full max-w-lg rounded-3xl p-6 sm:p-8 text-center border-2 shadow-2xl relative overflow-hidden ${
           playerWon
             ? 'border-yellow-400/80 bg-[#140e03]/95 shadow-[0_0_80px_rgba(250,204,21,0.4)]'
             : 'border-red-600/80 bg-[#160404]/95 shadow-[0_0_80px_rgba(220,38,38,0.4)]'
         }`}
+        onClick={(e) => e.stopPropagation()}
       >
+        {/* Top-Right Close Button */}
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white/70 hover:bg-white/20 hover:text-white transition-all z-10"
+            title="Close"
+          >
+            <X size={18} />
+          </button>
+        )}
+
         {/* Top Banner Icon */}
         <div
           className={`inline-flex w-20 h-20 items-center justify-center rounded-3xl mb-3 border shadow-xl ${
@@ -153,7 +171,7 @@ export const MatchResultModal: React.FC<MatchResultModalProps> = ({
             <span>Global Rankings</span>
           </button>
 
-          <button
+          {onOpenSideQuest && <button
             type="button"
             onClick={() => {
               sounds.playClick();
@@ -163,7 +181,7 @@ export const MatchResultModal: React.FC<MatchResultModalProps> = ({
           >
             <HeartHandshake size={13} />
             <span>Side Quest (Fund)</span>
-          </button>
+          </button>}
         </div>
       </div>
     </div>

@@ -8,6 +8,19 @@ class SoundController {
   private ctx: AudioContext | null = null;
   public enabled: boolean = true;
   private currentAudio: HTMLAudioElement | null = null;
+  private characterSelectionAudio: HTMLAudioElement | null = null;
+
+  // Claude is silent in GTA III, so his cue is the GTA III mission sound.
+  // GTA VI clips are deliberately omitted until authentic audio is available.
+  private readonly characterSelectionSounds: Record<string, string> = {
+    'tommy-vercetti': '/sounds/tommy-vercetti.mp3',
+    'carl-johnson': '/sounds/character-select/carl-johnson.mp3',
+    claude: '/sounds/character-select/claude.mp3',
+    'niko-bellic': '/sounds/character-select/niko-bellic.mp3',
+    'trevor-philips': '/sounds/character-select/trevor-philips.mp3',
+    'michael-de-santa': '/sounds/character-select/michael-de-santa.mp3',
+    'franklin-clinton': '/sounds/character-select/franklin-clinton.mp3',
+  };
 
   // 5 user-uploaded sound effects stored in /public/sounds/
   public readonly donateSounds: string[] = [
@@ -62,6 +75,7 @@ class SoundController {
     if (typeof window === 'undefined') return;
 
     try {
+      this.characterSelectionAudio = null;
       if (this.currentAudio) {
         this.currentAudio.pause();
         this.currentAudio.currentTime = 0;
@@ -93,6 +107,30 @@ class SoundController {
     } catch (e) {
       console.warn('Error stopping audio:', e);
     }
+  }
+
+  /** Play only after the player chooses a fighter, including the CPU rival. */
+  public playCharacterSelection(characterId: string) {
+    this.stopCharacterSelection();
+    if (!this.enabled) return;
+
+    const src = this.characterSelectionSounds[characterId];
+    if (!src) {
+      this.playClick();
+      return;
+    }
+    this.playSound(src, 0.8);
+    this.characterSelectionAudio = this.currentAudio;
+  }
+
+  /** Stop the selection cue without interrupting a subsequent fight sound. */
+  public stopCharacterSelection() {
+    const audio = this.characterSelectionAudio;
+    this.characterSelectionAudio = null;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+    if (this.currentAudio === audio) this.currentAudio = null;
   }
 
   /**

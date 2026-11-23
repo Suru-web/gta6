@@ -80,6 +80,47 @@ export default function AdminPage() {
   const [copiedUtr, setCopiedUtr] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [sideQuestVisible, setSideQuestVisible] = useState<boolean | null>(null);
+  const [isSavingVisibility, setIsSavingVisibility] = useState(false);
+  const [visibilityError, setVisibilityError] = useState('');
+
+  const loadVisibility = useCallback(async () => {
+    try {
+      const response = await fetch('/api/site-settings', { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok || !data.success || typeof data.settings?.sideQuestVisible !== 'boolean') throw new Error('Unable to load visibility.');
+      setSideQuestVisible(data.settings.sideQuestVisible);
+      setVisibilityError('');
+    } catch {
+      setVisibilityError('Could not load visibility. Please try again.');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) void loadVisibility();
+  }, [isAuthenticated, loadVisibility]);
+
+  const handleVisibilityToggle = async () => {
+    if (sideQuestVisible === null || isSavingVisibility) return;
+    setIsSavingVisibility(true);
+    setVisibilityError('');
+    try {
+      const response = await fetch('/api/admin/site-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sideQuestVisible: !sideQuestVisible }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success || typeof data.settings?.sideQuestVisible !== 'boolean') {
+        throw new Error(data.error || 'Could not save visibility.');
+      }
+      setSideQuestVisible(data.settings.sideQuestVisible);
+    } catch (error) {
+      setVisibilityError(error instanceof Error ? error.message : 'Could not save visibility.');
+    } finally {
+      setIsSavingVisibility(false);
+    }
+  };
 
   const handleCopyUtr = (utr: string) => {
     navigator.clipboard.writeText(utr);
@@ -576,6 +617,23 @@ export default function AdminPage() {
               </div>
             </div>
           )}
+        </section>
+
+        <section className="rounded-3xl border border-white/10 bg-[#1c1233] p-6" aria-labelledby="site-visibility-heading">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-[#fca47a]">Site settings</p>
+              <h2 id="site-visibility-heading" className="mt-1 font-bebas text-3xl tracking-wider text-white">Side Quest visibility</h2>
+              <p className="max-w-xl text-xs leading-relaxed text-slate-400">Show the Side Quest, donation links, and fundraising content to visitors. Turn it off to hide them across the site.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-slate-300" aria-live="polite">{isSavingVisibility ? 'Saving…' : sideQuestVisible === null ? 'Loading…' : sideQuestVisible ? 'Visible' : 'Hidden'}</span>
+              <button type="button" role="switch" aria-label="Show Side Quest to visitors" aria-checked={sideQuestVisible === true} disabled={sideQuestVisible === null || isSavingVisibility} onClick={handleVisibilityToggle} className={`relative h-7 w-12 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#fca47a] disabled:cursor-not-allowed disabled:opacity-50 ${sideQuestVisible ? 'bg-[#fca47a]' : 'bg-slate-600'}`}>
+                <span className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition-transform ${sideQuestVisible ? 'translate-x-5' : 'translate-x-0'}`} />
+              </button>
+            </div>
+          </div>
+          {visibilityError && <p role="alert" className="mt-3 text-xs text-rose-300">{visibilityError} {sideQuestVisible === null && <button type="button" onClick={loadVisibility} className="underline">Retry</button>}</p>}
         </section>
 
         {/* UPI & QR Configuration Section */}

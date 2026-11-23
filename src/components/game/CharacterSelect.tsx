@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Character, Arena, Difficulty } from '@/types/game';
 import { GTA_ROSTER, DEFAULT_PLAYER_CHARACTER, DEFAULT_CPU_CHARACTER } from '@/config/roster';
 import { ARENAS, DEFAULT_ARENA } from '@/config/arenas';
@@ -29,8 +29,10 @@ export const CharacterSelect: React.FC<CharacterSelectProps> = ({
 
   const activeChar = activeTab === 'p1' ? selectedPlayer : selectedCpu;
 
+  useEffect(() => () => sounds.stopCharacterSelection(), []);
+
   const handleSelectChar = (char: Character) => {
-    sounds.playClick();
+    sounds.playCharacterSelection(char.id);
     if (activeTab === 'p1') {
       setSelectedPlayer(char);
     } else {
@@ -190,10 +192,10 @@ export const CharacterSelect: React.FC<CharacterSelectProps> = ({
             <div>
               <label className="text-[11px] font-mono uppercase tracking-wider text-[#a19bb5] block mb-1.5 flex items-center gap-1">
                 <Swords size={13} className="text-rose-400" />
-                CPU DIFFICULTY
+                GAME MODE / DIFFICULTY
               </label>
-              <div className="grid grid-cols-3 gap-1">
-                {(['easy', 'normal', 'hard'] as Difficulty[]).map((d) => (
+              <div className="grid grid-cols-4 gap-1">
+                {(['practice', 'easy', 'normal', 'hard'] as Difficulty[]).map((d) => (
                   <button
                     key={d}
                     type="button"
@@ -203,7 +205,9 @@ export const CharacterSelect: React.FC<CharacterSelectProps> = ({
                     }}
                     className={`py-2 text-[10px] font-mono uppercase font-bold rounded-lg transition-all ${
                       difficulty === d
-                        ? d === 'hard'
+                        ? d === 'practice'
+                          ? 'bg-cyan-400 text-black shadow-md font-black'
+                          : d === 'hard'
                           ? 'bg-rose-600 text-white shadow-md'
                           : d === 'normal'
                           ? 'bg-yellow-500 text-black shadow-md'
@@ -211,7 +215,7 @@ export const CharacterSelect: React.FC<CharacterSelectProps> = ({
                         : 'bg-white/5 text-[#a19bb5] hover:text-white'
                     }`}
                   >
-                    {d}
+                    {d === 'practice' ? 'PRACTICE' : d}
                   </button>
                 ))}
               </div>

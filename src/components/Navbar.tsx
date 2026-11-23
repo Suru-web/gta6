@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Volume2, VolumeX, Shield, Trophy, Eye, Swords, HeartHandshake, Info } from 'lucide-react';
+import { Volume2, VolumeX, Shield, Trophy, Eye, Swords, HeartHandshake } from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 import { SiteStats } from '@/types/donation';
 
 interface NavbarProps {
-  stats: SiteStats;
+  stats?: SiteStats;
   totalVisits?: number;
   onScrollToLegends?: () => void;
   onScrollToFight?: () => void;
@@ -25,13 +25,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   onScrollToQuest,
   onScrollToAbout,
 }) => {
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(() => sounds.enabled);
 
   const toggleSound = () => {
     const nextState = !soundEnabled;
     setSoundEnabled(nextState);
     sounds.enabled = nextState;
     if (nextState) sounds.playClick();
+    else sounds.stopAll();
   };
 
   return (
@@ -100,9 +101,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <HeartHandshake size={13} className="text-rose-400" />
               <span>Side Quest</span>
-              <span className="bg-yellow-400/20 text-yellow-300 text-[9px] px-1.5 rounded">
+              {stats && <span className="bg-yellow-400/20 text-yellow-300 text-[9px] px-1.5 rounded">
                 ₹{stats.totalRaised}
-              </span>
+              </span>}
             </button>
           )}
 
@@ -115,7 +116,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }}
               className="px-3 py-1.5 rounded-lg text-[#a19bb5] hover:bg-white/5 hover:text-white transition-colors"
             >
-              <span>Legends ({stats.totalDonors})</span>
+              <span>Legends ({stats?.totalDonors ?? 0})</span>
             </button>
           )}
 
