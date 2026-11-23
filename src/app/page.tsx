@@ -48,7 +48,7 @@ export default function HomePage() {
   const openSideQuest = sideQuestVisible === true ? () => router.push('/side-quest') : undefined;
 
   return (
-    <div className="retro-grid min-h-screen flex flex-col justify-between selection:bg-yellow-400 selection:text-black">
+    <div className="arena-home min-h-screen flex flex-col justify-between selection:bg-[#e4aa86] selection:text-[#201b19]">
       <Navbar
         totalVisits={totalVisits}
         onScrollToFight={() => scrollTo('game-arena')}
@@ -56,7 +56,7 @@ export default function HomePage() {
         onScrollToQuest={openSideQuest}
       />
 
-      <main className="flex-1 space-y-6">
+      <main className="flex-1">
         <section id="game-arena">
           <GameContainer onOpenSideQuest={openSideQuest} onScrollToLeaderboard={() => scrollTo('global-rankings')} />
         </section>

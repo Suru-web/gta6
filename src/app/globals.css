@@ -192,7 +192,7 @@ body {
 .arena-intro-art { position: absolute; inset: 0; background: linear-gradient(90deg, #201c1b 0%, #201c1bf2 31%, #201c1b82 56%, #201c1b18 100%), url('/gta6-hero.jpg') 70% 48% / cover; }
 .arena-intro-copy { position: relative; z-index: 1; padding: 4.5rem clamp(1.5rem, 6vw, 5.5rem); max-width: 650px; }
 .arena-eyebrow { display:flex; align-items:center; gap:.65rem; color:#e4aa86; font-size:.64rem; font-weight:700; letter-spacing:.2em; text-transform:uppercase; }
-.arena-eyebrow span { width:1.7rem; height:1px; background:#e4aa86; }
+.arena-eyebrow .arena-eyebrow-mark { flex:none; width:1.7rem; height:1px; background:#e4aa86; }
 .arena-intro-title { margin:1.6rem 0 1rem; font-family:var(--font-bebas), Impact, sans-serif; font-size:clamp(5rem, 9vw, 9rem); line-height:.79; letter-spacing:.015em; text-transform:uppercase; }
 .arena-intro-title em { color:#e4aa86; font-style:normal; }
 .arena-intro-description { max-width:21rem; color:#d4cbc2; font-size:1rem; line-height:1.65; }
@@ -240,9 +240,98 @@ body {
 @media(max-width:767px) { .arena-intro { padding-top:.75rem; } .arena-intro-stage { min-height:490px; align-items:end; } .arena-intro-art { background:linear-gradient(0deg,#201c1b 0%,#201c1be0 42%,#201c1b25 100%),url('/gta6-hero.jpg') 66% center / cover; } .arena-intro-copy { padding:9rem 1.5rem 4rem; } .arena-intro-title { font-size:clamp(4.5rem,17vw,7rem); } .arena-intro-caption { bottom:1rem; right:1rem; } .arena-details { gap:1.2rem; flex-wrap:wrap; } .arena-details p { display:none; } .fight-select-grid { grid-template-columns:1fr; } .fight-preview { min-height:330px; } .fight-select-header { align-items:start; } .fight-select-header h2 { font-size:2.8rem; } }
 @media(max-width:420px) { .arena-details { justify-content:space-between; gap:.5rem; } .arena-details strong { font-size:1.55rem; } .arena-details div span { font-size:.58rem; } .fight-roster-item { padding:.6rem; } .fight-hud { gap:.4rem; } }
 @media(prefers-reduced-motion:reduce) { .arena-primary, .fight-roster-item, .fight-health i { transition:none; } }
-.arena-rankings { background:#171514; }
-.arena-rankings > div > div:nth-child(3) { background:#201d1b; border-color:#ffffff1a; box-shadow:none; }
-.arena-rankings thead tr { background:#26211e; color:#b8aaa0; }
-.arena-rankings tbody tr:first-child { background:#e4aa860b; }
-.arena-rankings tbody td:first-child span { border-radius:0; box-shadow:none; }
-.arena-rankings tbody td:first-child span { background:transparent; color:#d7a586; }
+/* Home and rankings share the same warm fight-card palette and content grid. */
+.arena-home { background:#100f0e; color:#f3eee7; }
+.arena-home header { background:#100f0eeb; }
+.arena-home .title-gradient { background:none; -webkit-text-fill-color:#e4aa86; color:#e4aa86; }
+.arena-home nav svg { color:#d9aa8d; }
+.arena-home .arena-quest-link { color:#e4aa86; border-color:#e4aa8640; background:#e4aa8612; }
+.arena-home #game-arena, .arena-home #global-rankings { scroll-margin-top:6rem; }
+.arena-mobile-nav { padding:.25rem 1rem .65rem; border-top:1px solid #ffffff0b; }
+.arena-mobile-nav button { margin-right:1.75rem; color:#c2b7ae; font-size:.7rem; font-weight:600; }
+.arena-rankings { background:#191716; border-top:1px solid #ffffff12; padding:clamp(3rem,6vw,5.5rem) 0; }
+.rankings-header { display:flex; justify-content:space-between; align-items:end; gap:2rem; margin-bottom:2.5rem; }
+.rankings-header h2 { margin-top:1.2rem; font-family:var(--font-bebas),Impact,sans-serif; font-size:clamp(3rem,5vw,4.6rem); line-height:.95; }
+.rankings-header h2 span { color:#e4aa86; }
+.rankings-description { color:#bdb2aa; font-size:.9rem; line-height:1.6; margin-top:.9rem; }
+.rankings-total { display:flex; gap:.65rem; align-items:center; color:#bdb2aa; font-size:.65rem; line-height:1.2; text-transform:uppercase; letter-spacing:.1em; white-space:nowrap; }
+.rankings-total strong { font-family:var(--font-bebas),sans-serif; font-size:2.3rem; line-height:1; color:#e4aa86; }
+.rankings-toolbar { display:flex; justify-content:space-between; align-items:end; gap:1rem; border-bottom:1px solid #ffffff26; }
+.rankings-tabs { display:flex; gap:clamp(.8rem,2.4vw,2rem); overflow-x:auto; min-width:0; scrollbar-width:thin; }
+.rankings-tabs button { flex:none; padding:.85rem 0; color:#9f958e; border-bottom:2px solid transparent; font-size:.7rem; font-weight:700; white-space:nowrap; text-transform:uppercase; letter-spacing:.05em; }
+.rankings-tabs button:hover, .rankings-tabs button[aria-pressed=true] { color:#f5eee7; }
+.rankings-tabs button[aria-pressed=true] { border-color:#e4aa86; }
+.rankings-refresh { display:flex; align-items:center; gap:.45rem; flex:none; color:#bdb2aa; font-size:.75rem; padding:.85rem 0; }
+.rankings-refresh:hover { color:#fff; }
+.rankings-refresh:disabled { opacity:.55; }
+.rankings-message { padding:2rem 0; color:#c4bab3; font-size:.85rem; }
+.rankings-table-wrap { width:100%; overflow-x:auto; }
+.rankings-table { width:100%; border-collapse:collapse; text-align:left; }
+.rankings-table th { padding:1.1rem 1rem; color:#958982; font-size:.6rem; letter-spacing:.1em; text-transform:uppercase; font-weight:700; }
+.rankings-table th:nth-child(n+3), .rankings-table td:nth-child(n+3) { text-align:center; }
+.rankings-table th:last-child, .rankings-table td:last-child { text-align:right; }
+.rankings-table td { padding:1rem; border-top:1px solid #ffffff12; color:#eee7df; font-size:.8rem; }
+.rankings-table tbody tr:first-child { background:#e4aa8609; }
+.rankings-table tbody tr:hover { background:#ffffff08; }
+.rankings-table .rankings-rank { color:#e4aa86; font-family:var(--font-bebas),sans-serif; font-size:1.2rem; }
+.rankings-fighter { display:flex; align-items:center; gap:.85rem; min-width:12rem; }
+.rankings-initial { display:grid; place-items:center; width:2.55rem; height:2.55rem; flex:none; border:1px solid #e4aa8640; color:#e4aa86; font-family:var(--font-bebas),sans-serif; font-size:1.05rem; }
+.rankings-fighter strong, .rankings-fighter small { display:block; }
+.rankings-fighter strong { font-family:var(--font-bebas),sans-serif; font-size:1.2rem; line-height:1; letter-spacing:.03em; }
+.rankings-fighter small { color:#a99d95; font-size:.68rem; margin-top:.3rem; }
+.rankings-rate { display:block; }
+.rankings-meter { display:block; width:3.2rem; height:2px; margin:.35rem auto 0; background:#ffffff25; }
+.rankings-meter i { display:block; height:100%; background:#e4aa86; }
+.rankings-score { color:#e4aa86 !important; font-weight:700; white-space:nowrap; }
+.rankings-score small { font-size:.6rem; color:#a99d95; }
+.rankings-bottom { display:flex; align-items:center; justify-content:space-between; gap:1rem; border-top:1px solid #ffffff26; padding-top:1.5rem; margin-top:.25rem; }
+.rankings-bottom p { color:#a99d95; font-size:.8rem; }
+.rankings-bottom button, .arena-footer-top button { display:flex; align-items:center; gap:.6rem; color:#e4aa86; font-size:.75rem; font-weight:700; }
+.rankings-bottom button:hover, .arena-footer-top button:hover { color:#fff; }
+.arena-footer { border-top:1px solid #ffffff14; background:#100f0e; padding:2.5rem 0; }
+.arena-footer-top, .arena-footer-bottom { display:flex; align-items:center; justify-content:space-between; gap:2rem; }
+.arena-footer-top strong { font-family:var(--font-bebas),sans-serif; font-size:1.65rem; letter-spacing:.03em; }
+.arena-footer-top strong span { color:#e4aa86; }
+.arena-footer-top p { color:#a99d95; font-size:.75rem; margin-top:.2rem; }
+.arena-footer-bottom { margin-top:2rem; padding-top:1.25rem; border-top:1px solid #ffffff12; color:#8e847e; font-size:.68rem; line-height:1.6; }
+.arena-footer-bottom p { max-width:50rem; }
+.arena-footer-bottom a { white-space:nowrap; }
+.arena-footer-bottom a:hover { color:#e4aa86; }
+
+/* An in-page immersive match, without invoking browser fullscreen. */
+.fight-immersive { position:fixed; inset:0; z-index:80; display:flex; padding:clamp(.5rem,1.4vw,1.25rem); background:#100f0ef5; }
+.fight-frame { position:relative; display:flex; flex-direction:column; width:100%; height:100%; min-height:0; overflow:hidden; border:1px solid #ffffff30; background:#151414; }
+.fight-stage { flex:1; min-height:0; overflow:hidden; }
+.fight-controls-legend { flex:none; gap:1rem; color:#bdb2aa; }
+.fight-controls-legend > div { flex-wrap:wrap; row-gap:.2rem; }
+.fight-pause-panel { background:#201d1b; }
+.fight-touch-controls { display:none; touch-action:none; }
+.fight-touch-controls button { background:#201d1be8 !important; border-color:#e4aa8655 !important; color:#f3eee7 !important; box-shadow:none !important; }
+.fight-touch-controls button:active { background:#e4aa86 !important; color:#201b19 !important; }
+@media (hover:none), (max-width:767px) { .fight-touch-controls { display:flex; } }
+@media(max-width:639px) {
+  .arena-home header > div { gap:.4rem; }
+  .arena-home header > div > div:first-child { min-width:0; }
+  .arena-home header > div > div:first-child a > span:first-child { font-size:1.35rem; white-space:nowrap; }
+  .rankings-header { align-items:start; gap:1rem; margin-bottom:1.5rem; }
+  .rankings-header h2 { font-size:2.9rem; }
+  .rankings-total { gap:.35rem; font-size:.52rem; }
+  .rankings-total strong { font-size:1.8rem; }
+  .rankings-toolbar { align-items:stretch; flex-direction:column; gap:0; }
+  .rankings-tabs { display:grid; grid-template-columns:1fr 1fr; gap:0 1rem; overflow:visible; }
+  .rankings-tabs button { font-size:.62rem; text-align:left; }
+  .rankings-refresh { align-self:flex-end; font-size:.65rem; padding:.7rem 0; }
+  .rankings-table, .rankings-table tbody { display:block; }
+  .rankings-table thead { display:none; }
+  .rankings-table tbody tr { display:grid; grid-template-columns:2rem repeat(5,minmax(0,1fr)); align-items:center; border-top:1px solid #ffffff12; padding:.85rem .45rem; }
+  .rankings-table td { display:block; border:0; padding:.35rem .15rem; font-size:.7rem; }
+  .rankings-table td:first-child { grid-row:1 / span 2; align-self:start; }
+  .rankings-table td:nth-child(2) { grid-column:2 / -1; padding-bottom:.65rem; }
+  .rankings-table td:nth-child(n+3) { text-align:left; }
+  .rankings-table td:nth-child(n+3)::before { content:attr(data-label); display:block; color:#958982; font-size:.5rem; font-weight:700; text-transform:uppercase; white-space:nowrap; margin-bottom:.25rem; }
+  .rankings-fighter { min-width:0; }
+  .rankings-meter { width:80%; margin-left:0; }
+  .rankings-bottom, .arena-footer-bottom { align-items:flex-start; flex-direction:column; }
+  .fight-immersive { padding:.35rem; }
+  .fight-roster { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}

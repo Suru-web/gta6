@@ -660,7 +660,12 @@ export class GameEngine {
     ctx.save();
     ctx.globalAlpha = Math.min(1, Math.max(0, this.roundState.bannerAlpha));
     ctx.translate(this.width / 2, this.height * 0.38);
-    ctx.scale(this.roundState.bannerScale, this.roundState.bannerScale);
+    // The arena may fill a viewport with a different aspect ratio than the
+    // simulation canvas. Keep banner lettering proportional in that view.
+    const scaleX = this.canvas.clientWidth / this.width;
+    const scaleY = this.canvas.clientHeight / this.height;
+    const aspectCorrection = this.callbacks.render3DMode && scaleX > 0 && scaleY > 0 ? scaleX / scaleY : 1;
+    ctx.scale(this.roundState.bannerScale, this.roundState.bannerScale * aspectCorrection);
 
     ctx.font = '900 46px "Impact", "Arial Black", sans-serif';
     ctx.textAlign = 'center';

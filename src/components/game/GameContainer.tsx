@@ -71,6 +71,13 @@ export const GameContainer: React.FC<GameContainerProps> = ({
   const engineRef = useRef<GameEngine | null>(null);
   const [engineInstance, setEngineInstance] = useState<GameEngine | null>(null);
 
+  useEffect(() => {
+    if (screen !== 'fight') return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [screen]);
+
   // Keyboard input state
   const keysDown = useRef<Record<string, boolean>>({});
 
@@ -277,7 +284,7 @@ export const GameContainer: React.FC<GameContainerProps> = ({
           <div className="arena-intro-stage">
             <div className="arena-intro-art" aria-hidden="true" />
             <div className="arena-intro-copy">
-              <p className="arena-eyebrow"><span /> THE UNOFFICIAL GTA FIGHT CLUB</p>
+              <p className="arena-eyebrow"><span className="arena-eyebrow-mark" aria-hidden="true" /> THE UNOFFICIAL GTA FIGHT CLUB</p>
               <h1 className="arena-intro-title">Legends<br /><em>collide.</em></h1>
               <p className="arena-intro-description">Pick your fighter, enter the arena, and settle the rivalry one round at a time.</p>
               <div className="arena-intro-actions">
@@ -314,7 +321,8 @@ export const GameContainer: React.FC<GameContainerProps> = ({
       {/* 3. LIVE MATCH SCREEN (3D ARENA + HUD + MOBILE TOUCH)     */}
       {/* ======================================================== */}
       {screen === 'fight' && (
-        <div className="relative w-full max-w-5xl mx-auto overflow-hidden border border-white/15 bg-[#151414] my-4">
+        <div className="fight-immersive" role="region" aria-label="Fight arena">
+        <div className="fight-frame">
           
           {/* Top Arcade HUD */}
           <GameHUD
@@ -344,7 +352,7 @@ export const GameContainer: React.FC<GameContainerProps> = ({
 
           {/* 3D WebGL Arena Viewport + 2D Particle/Banner Overlay with Mouse Strike Support */}
           <div
-            className="relative w-full aspect-[800/480] bg-[#151414] select-none"
+            className="fight-stage relative w-full bg-[#151414] select-none"
             onContextMenu={(e) => e.preventDefault()}
             onMouseDown={(e) => {
               if (screen !== 'fight') return;
@@ -385,12 +393,12 @@ export const GameContainer: React.FC<GameContainerProps> = ({
               ref={canvasRef}
               width={800}
               height={480}
-              className="absolute inset-0 w-full h-full object-contain block z-10 pointer-events-none"
+              className="absolute inset-0 w-full h-full block z-10 pointer-events-none"
             />
           </div>
 
           {/* Desktop Keyboard & Mouse Controls Legend Bar */}
-          <div className="hidden sm:flex items-center justify-between px-4 py-2 bg-black/90 border-t border-white/10 font-mono text-[11px] text-[#a19bb5]">
+          <div className="fight-controls-legend hidden sm:flex items-center justify-between px-4 py-2 bg-black/90 border-t border-white/10 font-mono text-[11px] text-[#a19bb5]">
             <div className="flex items-center gap-3">
               <span><strong>A/D</strong> Move</span>
               <span><strong>W</strong> Jump</span>
@@ -415,7 +423,7 @@ export const GameContainer: React.FC<GameContainerProps> = ({
           {/* Pause Menu Modal Overlay */}
           {isPaused && (
             <div className="absolute inset-0 z-40 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-              <div className="bg-[#120b22] border border-white/20 rounded-3xl p-6 text-center max-w-xs w-full shadow-2xl">
+              <div className="fight-pause-panel border border-white/20 p-6 text-center max-w-xs w-full shadow-2xl">
                 <h3 className="font-bebas text-3xl text-white tracking-wider mb-4">
                   {difficulty === 'practice' ? 'PRACTICE PAUSED' : 'MATCH PAUSED'}
                 </h3>
@@ -455,6 +463,7 @@ export const GameContainer: React.FC<GameContainerProps> = ({
               </div>
             </div>
           )}
+        </div>
         </div>
       )}
 

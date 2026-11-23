@@ -1,316 +1,118 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { ArrowUpRight, RefreshCw } from 'lucide-react';
 import { LeaderboardResponse, FighterStatSummary } from '@/types/game';
-import { Trophy, Flame, Target, Users, RefreshCw, Award, Swords } from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 
 interface LeaderboardProps {
   onFightNow?: () => void;
 }
 
+type RankingTab = 'strength' | 'victories' | 'winrate' | 'popular';
+const tabs: { id: RankingTab; label: string }[] = [
+  { id: 'strength', label: 'Overall strongest' },
+  { id: 'victories', label: 'Most victories' },
+  { id: 'winrate', label: 'Highest win rate' },
+  { id: 'popular', label: 'Most popular' },
+];
+
+async function loadRankings(signal?: AbortSignal): Promise<LeaderboardResponse> {
+  const res = await fetch('/api/game/rankings', { cache: 'no-store', signal });
+  const json = await res.json();
+  if (!res.ok || !json.success) throw new Error('Could not load rankings');
+  return json;
+}
+
 export const Leaderboard: React.FC<LeaderboardProps> = ({ onFightNow }) => {
   const [data, setData] = useState<LeaderboardResponse | null>(null);
-  const [activeTab, setActiveTab] = useState<'strength' | 'victories' | 'winrate' | 'popular'>('strength');
+  const [activeTab, setActiveTab] = useState<RankingTab>('strength');
   const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   const fetchRankings = async () => {
-    setIsLoading(true);
     try {
-      const res = await fetch(`/api/game/rankings?_t=${Date.now()}`);
-      const json = await res.json();
-      if (json.success) {
-        setData(json);
-      }
-    } catch (e) {
-      console.warn('Failed to fetch rankings:', e);
+      setData(await loadRankings());
+      setHasError(false);
+    } catch (error) {
+      console.warn('Failed to fetch rankings:', error);
+      setHasError(true);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchRankings();
+    const controller = new AbortController();
+    void loadRankings(controller.signal).then((rankings) => {
+      setData(rankings);
+      setHasError(false);
+    }).catch((error) => {
+      if (!controller.signal.aborted) {
+        console.warn('Failed to fetch rankings:', error);
+        setHasError(true);
+      }
+    }).finally(() => {
+      if (!controller.signal.aborted) setIsLoading(false);
+    });
+    return () => controller.abort();
   }, []);
 
-  const getActiveList = (): FighterStatSummary[] => {
-    if (!data) return [];
-    if (activeTab === 'strength') return data.byStrength;
-    if (activeTab === 'victories') return data.byVictories;
-    if (activeTab === 'winrate') return data.byWinRate;
-    return data.byPopularity;
+  const lists: Record<RankingTab, FighterStatSummary[]> = {
+    strength: data?.byStrength ?? [],
+    victories: data?.byVictories ?? [],
+    winrate: data?.byWinRate ?? [],
+    popular: data?.byPopularity ?? [],
   };
-
-  const list = getActiveList();
+  const list = lists[activeTab];
 
   return (
-    <section id="global-rankings" className="arena-rankings relative px-4 py-10 sm:py-16">
-      <div className="max-w-5xl mx-auto">
-        
-        {/* Section Header */}
-        <div className="text-left mb-8">
-          <div className="arena-eyebrow mb-4">
-            <Trophy size={13} />
-            <span>THE LEADERBOARD</span>
+    <section id="global-rankings" className="arena-rankings">
+      <div className="arena-rankings-inner mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="rankings-header">
+          <div>
+            <p className="arena-eyebrow"><span className="arena-eyebrow-mark" aria-hidden="true" /> THE LEADERBOARD</p>
+            <h2>The fight for the top<span>.</span></h2>
+            <p className="rankings-description">Every completed match leaves its mark. See how the fighters stack up.</p>
           </div>
-
-          <h2 className="font-bebas text-4xl sm:text-6xl text-white tracking-wider">
-            The fight for the top.
-          </h2>
-          <p className="text-sm text-[#bcb0a7] max-w-xl mt-2">
-            Every completed match leaves its mark. See how the fighters stack up.
-          </p>
-
-          {data && (
-            <div className="mt-2 text-[11px] font-mono text-[#fca47a]">
-              Total Matches Recorded: <strong className="text-white">{data.totalMatches}</strong>
-            </div>
-          )}
+          {data && <p className="rankings-total"><strong>{String(data.totalMatches).padStart(2, '0')}</strong><span>matches<br />recorded</span></p>}
         </div>
 
-        {/* Tab Switcher & Refresh Button */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-6">
-          <div className="flex flex-wrap gap-1.5 bg-black/60 p-1 rounded-2xl border border-white/10 backdrop-blur-md">
-            <button
-              type="button"
-              onClick={() => {
-                sounds.playClick();
-                setActiveTab('strength');
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-mono uppercase font-bold rounded-xl transition-all ${
-                activeTab === 'strength'
-                  ? 'bg-[#e4aa86] text-[#201b19]'
-                  : 'text-[#a19bb5] hover:text-white'
-              }`}
-            >
-              <Award size={14} />
-              <span>Overall Strongest</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                sounds.playClick();
-                setActiveTab('victories');
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-mono uppercase font-bold rounded-xl transition-all ${
-                activeTab === 'victories'
-                  ? 'bg-[#e4aa86] text-[#201b19]'
-                  : 'text-[#a19bb5] hover:text-white'
-              }`}
-            >
-              <Trophy size={14} />
-              <span>Most Victorious</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                sounds.playClick();
-                setActiveTab('winrate');
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-mono uppercase font-bold rounded-xl transition-all ${
-                activeTab === 'winrate'
-                  ? 'bg-[#e4aa86] text-[#201b19]'
-                  : 'text-[#a19bb5] hover:text-white'
-              }`}
-            >
-              <Target size={14} />
-              <span>Highest Win Rate</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                sounds.playClick();
-                setActiveTab('popular');
-              }}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-mono uppercase font-bold rounded-xl transition-all ${
-                activeTab === 'popular'
-                  ? 'bg-[#e4aa86] text-[#201b19]'
-                  : 'text-[#a19bb5] hover:text-white'
-              }`}
-            >
-              <Users size={14} />
-              <span>Most Popular</span>
-            </button>
+        <div className="rankings-toolbar">
+          <div className="rankings-tabs" aria-label="Rank fighters by">
+            {tabs.map((tab) => (
+              <button key={tab.id} type="button" aria-pressed={activeTab === tab.id} onClick={() => { sounds.playClick(); setActiveTab(tab.id); }}>
+                {tab.label}
+              </button>
+            ))}
           </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              sounds.playClick();
-              fetchRankings();
-            }}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-mono text-[#a19bb5] hover:text-white bg-white/5 border border-white/10 rounded-xl transition-all"
-            title="Refresh Leaderboard"
-          >
-            <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
-            <span>Refresh</span>
+          <button type="button" className="rankings-refresh" disabled={isLoading} onClick={() => { sounds.playClick(); setIsLoading(true); void fetchRankings(); }}>
+            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} aria-hidden="true" /> Refresh
           </button>
         </div>
 
-        {/* Leaderboard Table / Cards */}
-        <div className="bg-[#120b22]/90 border border-white/[0.08] overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left font-mono text-xs">
-              <thead>
-                <tr className="border-b border-white/10 bg-black/40 text-[11px] text-[#a19bb5] uppercase">
-                  <th className="py-3.5 px-4 w-12 text-center">Rank</th>
-                  <th className="py-3.5 px-4">Fighter</th>
-                  <th className="py-3.5 px-4 text-center">Picks</th>
-                  <th className="py-3.5 px-4 text-center">Wins</th>
-                  <th className="py-3.5 px-4 text-center">Losses</th>
-                  <th className="py-3.5 px-4 text-center">Win Rate</th>
-                  <th className="py-3.5 px-4 text-right">Power Score</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {list.map((fighter, idx) => {
-                  const rank = idx + 1;
-                  const isTop1 = rank === 1;
-                  const isTop3 = rank <= 3;
-
-                  return (
-                    <tr
-                      key={fighter.characterId}
-                      className={`hover:bg-white/[0.03] transition-colors ${
-                        isTop1 ? 'bg-yellow-400/[0.04]' : ''
-                      }`}
-                    >
-                      {/* Rank Column */}
-                      <td className="py-3 px-4 text-center">
-                        <span
-                          className={`inline-flex items-center justify-center w-6 h-6 rounded-lg text-xs font-bold ${
-                            rank === 1
-                              ? 'bg-yellow-400 text-black shadow-[0_0_10px_#facc15]'
-                              : rank === 2
-                              ? 'bg-zinc-300 text-black'
-                              : rank === 3
-                              ? 'bg-amber-700 text-white'
-                              : 'text-[#6c637e]'
-                          }`}
-                        >
-                          {rank}
-                        </span>
-                      </td>
-
-                      {/* Character Info */}
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl filter drop-shadow">
-                            {fighter.characterId === 'tommy-vercetti'
-                              ? '🌴'
-                              : fighter.characterId === 'carl-johnson'
-                              ? '👑'
-                              : fighter.characterId === 'trevor-philips'
-                              ? '💀'
-                              : fighter.characterId === 'claude'
-                              ? '🕶️'
-                              : fighter.characterId === 'niko-bellic'
-                              ? '🦅'
-                              : fighter.characterId === 'michael-de-santa'
-                              ? '💼'
-                              : fighter.characterId === 'franklin-clinton'
-                              ? '🎯'
-                              : fighter.characterId === 'lucia-caminos'
-                              ? '🌺'
-                              : fighter.characterId === 'jason-duval'
-                              ? '🔥'
-                              : fighter.characterId === 'toni-cipriani'
-                              ? '🍝'
-                              : fighter.characterId === 'victor-vance'
-                              ? '⭐'
-                              : fighter.characterId === 'johnny-klebitz'
-                              ? '🏍️'
-                              : fighter.characterId === 'luis-lopez'
-                              ? '🍸'
-                              : '🗡️'}
-                          </span>
-                          <div>
-                            <div className="font-bebas text-lg text-white tracking-wider flex items-center gap-1.5">
-                              <span>{fighter.characterName}</span>
-                              {isTop1 && (
-                                <span className="bg-yellow-400/20 text-yellow-300 text-[9px] font-mono px-1.5 py-0.2 rounded font-bold">
-                                  #1 APEX
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-[#a19bb5]">
-                              {fighter.game}
-                            </span>
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Picks */}
-                      <td className="py-3 px-4 text-center font-bold text-white">
-                        {fighter.picks}
-                      </td>
-
-                      {/* Wins */}
-                      <td className="py-3 px-4 text-center font-bold text-emerald-400">
-                        {fighter.wins}
-                      </td>
-
-                      {/* Losses */}
-                      <td className="py-3 px-4 text-center text-[#6c637e]">
-                        {fighter.losses}
-                      </td>
-
-                      {/* Win Rate */}
-                      <td className="py-3 px-4 text-center">
-                        <div className="flex flex-col items-center">
-                          <span
-                            className={`font-bold ${
-                              fighter.winRate >= 60
-                                ? 'text-emerald-400'
-                                : fighter.winRate >= 45
-                                ? 'text-yellow-400'
-                                : 'text-[#a19bb5]'
-                            }`}
-                          >
-                            {fighter.winRate}%
-                          </span>
-                          <div className="w-16 h-1.5 bg-black/60 rounded-full overflow-hidden border border-white/10 mt-1">
-                            <div
-                              className="h-full bg-emerald-400"
-                              style={{ width: `${fighter.winRate}%` }}
-                            />
-                          </div>
-                        </div>
-                      </td>
-
-                      {/* Composite Power Score */}
-                      <td className="py-3 px-4 text-right">
-                        <span className="font-bold text-[#fca47a] text-sm">
-                          {fighter.score} PTS
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
+        {hasError && <p className="rankings-message" role="status">Couldn’t update the rankings. Try refreshing in a moment.</p>}
+        {!data && isLoading && <p className="rankings-message" role="status">Loading the rankings…</p>}
+        {data && list.length === 0 && <p className="rankings-message">No rankings yet. Finish a match to get on the board.</p>}
+        {list.length > 0 && (
+          <div className="rankings-table-wrap">
+            <table className="rankings-table">
+              <thead><tr><th scope="col">Rank</th><th scope="col">Fighter</th><th scope="col">Picks</th><th scope="col">Wins</th><th scope="col">Losses</th><th scope="col">Win rate</th><th scope="col">Power score</th></tr></thead>
+              <tbody>
+                {list.map((fighter, index) => (
+                  <tr key={fighter.characterId}>
+                    <td className="rankings-rank">{String(index + 1).padStart(2, '0')}</td>
+                    <td><div className="rankings-fighter"><span className="rankings-initial" aria-hidden="true">{fighter.characterName.split(' ').map((part) => part[0]).join('').slice(0, 2)}</span><div><strong>{fighter.characterName}</strong><small>{fighter.game}</small></div></div></td>
+                    <td data-label="Picks">{fighter.picks}</td><td data-label="Wins">{fighter.wins}</td><td data-label="Losses">{fighter.losses}</td>
+                    <td data-label="Win rate"><span className="rankings-rate">{fighter.winRate}%</span><span className="rankings-meter"><i style={{ width: `${Math.max(0, Math.min(100, fighter.winRate))}%` }} /></span></td>
+                    <td className="rankings-score" data-label="Score">{fighter.score} <small>PTS</small></td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
-        </div>
-
-        {/* Call to Action: Settle the Score */}
-        {onFightNow && (
-          <div className="mt-6 text-center">
-            <button
-              type="button"
-              onClick={() => {
-                sounds.playClick();
-                onFightNow();
-              }}
-              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#fca47a] to-[#e86b97] px-8 py-3.5 text-sm font-bold uppercase tracking-wider text-[#090514] hover:brightness-110 active:scale-95 transition-all shadow-xl shadow-[#fca47a]/20"
-            >
-              <Swords size={16} />
-              <span>Settle The Score: Fight As Your Favorite Legend</span>
-            </button>
-          </div>
         )}
+        {onFightNow && <div className="rankings-bottom"><p>Ready to change the rankings?</p><button type="button" onClick={() => { sounds.playClick(); onFightNow(); }}>Back to the arena <ArrowUpRight size={15} aria-hidden="true" /></button></div>}
       </div>
     </section>
   );

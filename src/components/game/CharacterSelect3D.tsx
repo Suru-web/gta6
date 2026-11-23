@@ -230,7 +230,7 @@ export const CharacterSelect3D: React.FC<CharacterSelect3DProps> = ({
   return (
     <section className="fight-select mx-auto max-w-7xl px-4 sm:px-6">
       <div className="fight-select-header">
-        <div><p className="arena-eyebrow"><span /> THE FIGHT CARD</p><h2>Choose your fighters<span>.</span></h2></div>
+        <div><p className="arena-eyebrow"><span className="arena-eyebrow-mark" aria-hidden="true" /> THE FIGHT CARD</p><h2>Choose your fighters<span>.</span></h2></div>
         <button type="button" onClick={onBackToTitle} className="fight-back">← Back to arena</button>
       </div>
       <div className="fight-select-grid">

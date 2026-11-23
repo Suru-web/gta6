@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { GameEngine } from '@/game/engine';
 import { ArenaScene3D } from '@/game/three/arenaScene';
 import { CharacterModel3D } from '@/game/three/characterModel';
+import { arenaCameraDistance } from '@/game/three/cameraFraming';
 
 interface ArenaCanvas3DProps {
   engine: GameEngine | null;
@@ -30,7 +31,8 @@ export const ArenaCanvas3D: React.FC<ArenaCanvas3DProps> = ({ engine }) => {
     sceneRef.current = arenaScene;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 1.45, 4.2);
+    const initialDistance = Math.abs(engine.player.x - engine.cpu.x) / 400 * 5.2;
+    camera.position.set(0, 1.45, arenaCameraDistance(initialDistance, camera.aspect, camera.fov));
     camera.lookAt(0, 1.15, 0);
     cameraRef.current = camera;
     engine.setImpactProjection((x, y) => {
@@ -100,7 +102,7 @@ export const ArenaCanvas3D: React.FC<ArenaCanvas3DProps> = ({ engine }) => {
       // Dynamic 3D Camera Tracking
       const midX = (p1WorldX + cpuWorldX) / 2;
       const fighterDistance = Math.abs(p1WorldX - cpuWorldX);
-      const targetZ = Math.max(3.8, 2.7 + fighterDistance * 0.38);
+      const targetZ = arenaCameraDistance(fighterDistance, camera.aspect, camera.fov);
 
       camera.position.x += (midX - camera.position.x) * 0.08;
       camera.position.z += (targetZ - camera.position.z) * 0.08;

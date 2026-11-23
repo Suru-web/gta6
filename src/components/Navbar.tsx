@@ -144,7 +144,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 sounds.playClick();
                 onScrollToQuest();
               }}
-              className="md:hidden flex items-center gap-1 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-1 text-xs font-mono text-yellow-400"
+              className="arena-quest-link md:hidden flex items-center gap-1 rounded-lg border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-1 text-xs font-mono text-yellow-400"
             >
               <HeartHandshake size={12} />
               <span>Side Quest</span>
@@ -171,6 +171,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           </Link>
         </div>
       </div>
+      {(onScrollToFight || onScrollToRankings) && (
+        <nav className="arena-mobile-nav md:hidden" aria-label="Main navigation">
+          {onScrollToFight && <button type="button" onClick={() => { sounds.playClick(); onScrollToFight(); }}>Fight</button>}
+          {onScrollToRankings && <button type="button" onClick={() => { sounds.playClick(); onScrollToRankings(); }}>Rankings</button>}
+        </nav>
+      )}
     </header>
   );
 };

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { ArrowUp, ShieldAlert } from 'lucide-react';
 import { sounds } from '@/lib/sounds';
 
@@ -10,6 +11,22 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ onScrollToTop, showSideQuest = true }) => {
+  if (!showSideQuest) {
+    return (
+      <footer className="arena-footer">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="arena-footer-top">
+            <div><strong>GTA <span>LEGENDS</span> ARENA</strong><p>A fan-made arcade for GTA rivalries.</p></div>
+            <button type="button" onClick={() => { sounds.playClick(); onScrollToTop(); }}>Back to top <ArrowUp size={14} aria-hidden="true" /></button>
+          </div>
+          <div className="arena-footer-bottom">
+            <p>An independent fan project. Not affiliated with Rockstar Games, Take-Two Interactive or Sony Interactive Entertainment. All trademarks and artwork belong to their respective owners.</p>
+            <Link href="/admin">Admin portal</Link>
+          </div>
+        </div>
+      </footer>
+    );
+  }
   return (
     <footer className="relative mt-16 border-t border-[#e86b97]/30 bg-[#0d071a] py-10 text-slate-400">
       <div className="mx-auto max-w-5xl px-4">
