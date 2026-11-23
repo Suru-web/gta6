@@ -17,22 +17,20 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   metadataBase: new URL("https://gta6-two-dun.vercel.app"),
   title: "GTA Legends Arena",
-  description: "Choose your fighter and settle the rivalry in GTA Legends Arena.",
+  description: "Pick a GTA legend, choose your rival, and fight it out in this fan-made browser game.",
   keywords: ["GTA", "GTA Legends Arena", "fighting game", "Vice City"],
   openGraph: {
     title: "GTA Legends Arena",
-    description: "Choose your fighter and settle the rivalry in GTA Legends Arena.",
+    description: "Pick a GTA legend, choose your rival, and fight it out in this fan-made browser game.",
     url: "https://gta6-two-dun.vercel.app",
     siteName: "GTA Legends Arena",
-    images: [{ url: "/gta6-hero.jpg", width: 3840, height: 2160, alt: "GTA Legends Arena" }],
     type: "website",
     locale: "en_IN",
   },
   twitter: {
     card: "summary_large_image",
     title: "GTA Legends Arena",
-    description: "Choose your fighter and settle the rivalry in GTA Legends Arena.",
-    images: ["/gta6-hero.jpg"],
+    description: "Pick a GTA legend, choose your rival, and fight it out in this fan-made browser game.",
     creator: "@SurajGMeharwade",
   },
   icons: {
