@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
-import { CHARACTER_MATERIAL_BINDINGS } from './characterMaterials';
+import { CHARACTER_MATERIAL_BINDINGS, cloneTransferredMaterial } from './characterMaterials';
 import { repairCharacterAsset } from './modelAssetFixes';
 
 export interface LoadedGLTFModel {
@@ -219,20 +219,20 @@ export class GLTFCharacterLoader {
                   const mesh = node as THREE.SkinnedMesh | THREE.Mesh;
                   const explicitMaterial = CHARACTER_MATERIAL_BINDINGS[characterId]?.[node.name];
                   if (explicitMaterial && matMap.has(explicitMaterial)) {
-                    mesh.material = matMap.get(explicitMaterial)!.clone();
+                    mesh.material = cloneTransferredMaterial(characterId, matMap.get(explicitMaterial)!);
                   } else if (matMap.has(node.name)) {
-                    mesh.material = matMap.get(node.name)!.clone();
+                    mesh.material = cloneTransferredMaterial(characterId, matMap.get(node.name)!);
                   } else if (Array.isArray(mesh.material)) {
                     mesh.material = mesh.material.map((m) =>
-                      m && matMap.has(m.name) ? matMap.get(m.name)!.clone() : m
+                      m && matMap.has(m.name) ? cloneTransferredMaterial(characterId, matMap.get(m.name)!) : m
                     );
                   } else if (mesh.material && matMap.has(mesh.material.name)) {
-                    mesh.material = matMap.get(mesh.material.name)!.clone();
+                    mesh.material = cloneTransferredMaterial(characterId, matMap.get(mesh.material.name)!);
                   } else if (glbMatsList[fbxMatIndex]) {
-                    mesh.material = glbMatsList[fbxMatIndex].clone();
+                    mesh.material = cloneTransferredMaterial(characterId, glbMatsList[fbxMatIndex]);
                     fbxMatIndex++;
                   } else if (firstMat) {
-                    mesh.material = firstMat.clone();
+                    mesh.material = cloneTransferredMaterial(characterId, firstMat);
                   }
                 }
               });
